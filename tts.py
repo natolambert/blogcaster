@@ -15,7 +15,8 @@ if __name__ == "__main__":
     # python tts.py --input raw/2023-29-11-synthetic.txt --output output.mp3
 
     CHUNK_SIZE = 1024
-    url = "https://api.elevenlabs.io/v1/text-to-speech/JOTluSP6086ORVtQED4S"
+    url_nathan = "https://api.elevenlabs.io/v1/text-to-speech/JOTluSP6086ORVtQED4S"
+    # url_newsread = "https://api.elevenlabs.io/v1/text-to-speech/frqJk20JrduLkgUgHtMR"
 
     headers = {
     "Accept": "audio/mpeg",
@@ -33,6 +34,11 @@ if __name__ == "__main__":
     # Split the text into substrings of max length 5000 without splitting words
     substrings = textwrap.wrap(data, width=5000, break_long_words=False)
 
+    # TODO remove all acronyms and other filtering
+    # TODO add seperate voice for quotes / quote detection
+    # TODO make it so audio never clips a sentence
+    # TODO shorten generation (volume can trail off)
+    
     for i, substring in tqdm(enumerate(substrings, start=1), desc="Processing substrings", unit="substring"):
         payload = {
             "model_id": "eleven_multilingual_v2",
@@ -45,7 +51,7 @@ if __name__ == "__main__":
             }
         }
 
-        response = requests.post(url, json=payload, headers=headers, params=querystring)
+        response = requests.post(url_nathan, json=payload, headers=headers, params=querystring)
         with open(f"{args.output}_part{i}.mp3", 'wb') as part_file:
             for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
                 if chunk:

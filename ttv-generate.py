@@ -8,6 +8,20 @@ import time
 SYSTEM_PROMPT = "The following instructions are text taken from a blog post on AI and ML, please create pretty images to accompany an audio version of this post: \n\n"
 client = OpenAI()
 
+# TODO investigate below
+"""
+Exception in thread Thread-3 (_handle_results):
+Traceback (most recent call last):
+  File "/Users/nato/miniconda3/envs/media/lib/python3.10/threading.py", line 1009, in _bootstrap_inner
+    self.run()
+  File "/Users/nato/miniconda3/envs/media/lib/python3.10/threading.py", line 946, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/nato/miniconda3/envs/media/lib/python3.10/multiprocessing/pool.py", line 576, in _handle_results
+    task = get()
+  File "/Users/nato/miniconda3/envs/media/lib/python3.10/multiprocessing/connection.py", line 256, in recv
+    return _ForkingPickler.loads(buf.getbuffer())
+TypeError: APIStatusError.__init__() missing 2 required keyword-only arguments: 'response' and 'body'
+"""
 def get_image(idx, string):
     # pidx = current_process()
     prompt = SYSTEM_PROMPT + string
@@ -51,7 +65,7 @@ if __name__ == "__main__":
     with open(args.input, "r") as f:
         data = f.read()
         
-    def split_string_into_segments(text, paragraphs_per_segment=2):
+    def split_string_into_segments(text, paragraphs_per_segment=1):
         paragraphs = text.split('\n\n')  # Assuming paragraphs are separated by two newline characters
         segments = [paragraphs[i:i + paragraphs_per_segment] for i in range(0, len(paragraphs), paragraphs_per_segment)]
         

@@ -1,8 +1,14 @@
 # Tools for blogging!
 
+```
+conda activate media
+```
+Or, install from `requirements.txt`
+
 ## Example usage
 Audio:
 ```
+python tts.py --input=raw/2023-12-06-dpo.txt
 ```
 
 Images:
