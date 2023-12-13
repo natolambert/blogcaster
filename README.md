@@ -6,9 +6,14 @@ conda activate media
 Or, install from `requirements.txt`
 
 ## Example usage
-Audio:
+Audio gen:
 ```
 python tts.py --input=raw/2023-12-06-dpo.txt
+```
+
+Audio add music + outro:
+```
+python add-music.py --input=audio/20231129-synthetic.mp3
 ```
 
 Images:
