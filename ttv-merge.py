@@ -25,12 +25,6 @@ def images_to_video(image_dir, audio_file, output_file):
     clips = [ImageClip(m).set_duration(image_duration) for m in all_images]
 
     concat_clip = concatenate_videoclips(clips, method="compose")
-    # concat_clip.write_videofile("output.mp4", fps=30)
-
-    # load video and add audio
-    # videoclip = VideoFileClip("output.mp4")
-
-    # new_audioclip = CompositeAudioClip([audio_clip])
     concat_clip_audio = concat_clip.set_audio(audio_clip)
     concat_clip_audio.write_videofile("new_filename.mp4", 
                                 fps=30,
@@ -39,38 +33,6 @@ def images_to_video(image_dir, audio_file, output_file):
                                 temp_audiofile='temp-audio.m4a', 
                                 remove_temp=True
                             )
-
-    # clips = [ImageClip(m).set_duration(2)
-    #   for m in img]
-
-    # concat_clip = concatenate_videoclips(clips, method="compose")
-    # concat_clip.write_videofile("test.mp4", fps=24)
-
-
-    # # Create VideoWriter object
-    # fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # or use 'XVID'
-    # video = cv2.VideoWriter(output_file, fourcc, 1.0 / image_duration, (width, height))
-
-    # # Write images to video with corresponding audio segments
-    # for i, image_file in enumerate(image_files):
-    #     image_path = os.path.join(image_dir, image_file)
-    #     frame = cv2.imread(image_path)
-
-    #     # Calculate the start and end time for the audio segment
-    #     start_time = i * image_duration
-    #     end_time = (i + 1) * image_duration
-
-    #     # Extract audio segment corresponding to the image
-    #     audio_segment = audio_clip.subclip(start_time, end_time)
-    #     import ipdb; ipdb.set_trace()
-    #     # Write image and audio segment to video
-    #     video.write(frame)
-    #     video.write(audio_segment.to_soundarray(fps=44100))
-
-    # video.release()
-
-    # # Clean up the temporary video file without audio
-    # os.remove(output_file)
 
 if __name__ == "__main__":
     # import argparse and define txt file path and output path

@@ -39,6 +39,7 @@ ptyprocess=0.7.0=pypi_0
 pure-eval=0.2.2=pypi_0
 pydantic=2.5.2=pypi_0
 pydantic-core=2.14.5=pypi_0
+pydub=0.25.1=pypi_0
 pygments=2.17.2=pypi_0
 python=3.10.0=hbdb9e5c_5
 readline=8.2=h1a28f6b_0
