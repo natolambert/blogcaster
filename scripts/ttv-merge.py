@@ -5,7 +5,7 @@ from moviepy.editor import VideoFileClip, AudioFileClip, ImageClip, concatenate_
 
 def images_to_video(image_dir, audio_file, output_file):
     # Get all image files in the directory
-    image_files = [f for f in os.listdir(image_dir) if f.endswith(('.jpg', '.jpeg', '.png'))]
+    image_files = [f for f in os.listdir(image_dir) if f.endswith(('.jpg', '.jpeg', '.png', '.webp'))]
     # image_files.sort()
     
     # Load the first image to get dimensions

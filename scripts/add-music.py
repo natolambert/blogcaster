@@ -13,15 +13,15 @@ if __name__ == "__main__":
     intro = AudioSegment.from_wav("audio/intro-v2.wav")
     outro = AudioSegment.from_wav("audio/outro-fade.wav")
     farewell = AudioSegment.from_mp3("audio/farewell.mp3")
-    outro = AudioSegment.silent(1500) + farewell + outro
+    outro = outro
     generation = AudioSegment.from_mp3(args.input)
     
     # add silence to beginning and end of generation equal to 3/4 of fade time
     silence = AudioSegment.silent(duration=args.fade_time*3/4)
-    generation = silence + generation + silence
+    generation = silence + generation + AudioSegment.silent(500) + farewell + AudioSegment.silent(500)
     
     # crossfade intro and outro with generation
-    final_audio = intro.append(generation, crossfade=args.fade_time).append(outro, crossfade=args.fade_time)
+    final_audio = intro.append(generation, crossfade=args.fade_time).append(outro, crossfade=1.25*args.fade_time)
     
     # export final audio
     final_audio.export(args.output, format="mp3")

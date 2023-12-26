@@ -31,13 +31,14 @@ if __name__ == "__main__":
     with open(args.input, "r") as f:
         data = f.read()
         
-    # Split the text into substrings of max length 5000 without splitting words
-    substrings = textwrap.wrap(data, width=5000, break_long_words=False)
+    # Split the text into substrings of max length 2500 without splitting words
+    substrings = textwrap.wrap(data, width=2500, break_long_words=False)
 
-    # TODO remove all acronyms and other filtering
+    # TODO remove all acronyms and other filtering, some that are bad are SOTA and MoE
     # TODO add seperate voice for quotes / quote detection
     # TODO make it so audio never clips a sentence
     # TODO shorten generation (volume can trail off)
+    # TODO see image audio for figures
     
     for i, substring in tqdm(enumerate(substrings, start=1), desc="Processing substrings", unit="substring"):
         payload = {
