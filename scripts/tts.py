@@ -78,6 +78,7 @@ if __name__ == "__main__":
     first_gen = True
     # iterate over config file that contains headings, text, and figures
     for i, (heading, content) in tqdm(enumerate(config.items())):
+        print(f"Generating audio for section {i}, {heading}")
         # skip md file path and date
         if heading in ["md", "date"]:
             continue
@@ -90,7 +91,10 @@ if __name__ == "__main__":
             
         payload["text"] = heading
         # generate audio for heading
-        request_audio(url_nathan, payload, headers, querystring, f"{audio_dir}/audio__{i}_0.mp3")
+        
+        fname = f"{audio_dir}/audio_{i}_0.mp3"
+        if not os.path.exists(fname):
+            request_audio(url_nathan, payload, headers, querystring, fname)
         TOTAL_GEN_AUDIO_FILES += 1
         
         # iterate over list of dicts in content and 
@@ -108,13 +112,19 @@ if __name__ == "__main__":
             # if para is str, generate audio
             elif type(para["content"]) == str:
                 payload["text"] = para["content"]
-                request_audio(url_nathan, payload, headers, querystring, f"{audio_dir}/audio_{i}_{idx}.mp3")
+                fname = f"{audio_dir}/audio_{i}_{idx}.mp3"
+                if not os.path.exists(fname):
+                    request_audio(url_nathan, payload, headers, querystring, fname)
                 TOTAL_GEN_AUDIO_FILES += 1
             else:
                 print("Config Error: para is neither dict nor str")
         
     # concatenate all files in audio_dir with ffmpeg into input dir
 
+    # if file generated_audio.mp3 already exists, delete it (prevent infinite loop)
+    if os.path.exists(audio_dir + '/' + args.output + ".mp3"):
+        os.remove(audio_dir + '/' + args.output + ".mp3")
+        
     # list mp3 files in audio_dir
     audio_files = [audio_dir + '/' + f for f in os.listdir(audio_dir) if f.endswith(('.mp3'))]
     audio_files = sorted(audio_files)

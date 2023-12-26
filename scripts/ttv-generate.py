@@ -4,6 +4,7 @@ import argparse
 from multiprocessing import Pool, current_process
 import requests
 import time 
+import yaml
 
 SYSTEM_PROMPT = "The following instructions are text taken from a blog post on AI and ML, please create pretty images to accompany an audio version of this post: \n\n"
 client = OpenAI()
