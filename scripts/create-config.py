@@ -9,6 +9,8 @@ def get_args():
     parser = argparse.ArgumentParser()
     # only one argument so doesn't need a tag
     parser.add_argument("directory", type=str, help="input directory path")
+    # add date to be published
+    parser.add_argument("--date", type=str, help="date to be published")
     args = parser.parse_args()
     return args
 
@@ -61,7 +63,7 @@ def parse_markdown_to_dict(md_content):
     """
     sections = {}
     current_section = ''
-    paragraph_index = 0
+    paragraph_index = 1
     section_index = 0
 
     for line in md_content.split('\n'):
@@ -96,12 +98,16 @@ def write_yaml_file(data, filename):
     with open(filename, 'w') as file:
         yaml.dump(data, file)
 
-def markdown_to_yaml(md_filename, yaml_filename):
+def markdown_to_yaml(md_filename, yaml_filename, date):
     """
     Convert markdown file to YAML file.
     """
     md_content = read_markdown_file(md_filename)
     sections_dict = parse_markdown_to_dict(md_content)
+    
+    # add markdown filename to dictionary
+    sections_dict["md"] = md_filename
+    sections_dict["date"] = date
     write_yaml_file(sections_dict, yaml_filename)
 
 
@@ -113,5 +119,7 @@ if __name__ == "__main__":
     # rename_spaces_to_underscores(images_dir)
     # rename_spaces_to_underscores(figures_directory)
     
-    markdown_to_yaml(args.directory + markdown_file, args.directory + "config.yml")
+    markdown_to_yaml(args.directory + markdown_file, args.directory + "config.yml", args.date)
+    
+    
     print(f"INFO: Created post config file at {args.directory + 'config.yml'}")
