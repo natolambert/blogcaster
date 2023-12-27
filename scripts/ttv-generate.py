@@ -54,13 +54,6 @@ if __name__ == "__main__":
     parser.add_argument("--input", type=str, help="input text file path")
     parser.add_argument("--outputs", type=str, default="images/", help="output path for created images")
     args = parser.parse_args()
-
-    # Replace 'your_long_text_document_here' with the actual text document
-    long_text_document = """
-    Your long text document goes here.
-    It can have multiple paragraphs.
-    Each paragraph should be separated by two newlines.
-    """
     
     # read input
     with open(args.input, "r") as f:

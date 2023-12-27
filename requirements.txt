@@ -8,10 +8,14 @@ bzip2=1.0.8=h620ffc9_4
 ca-certificates=2023.08.22=hca03da5_0
 certifi=2023.11.17=pypi_0
 charset-normalizer=3.3.2=pypi_0
+coverage=5.5=pypi_0
 decorator=4.4.2=pypi_0
+deprecation=2.1.0=pypi_0
 distro=1.8.0=pypi_0
 exceptiongroup=1.2.0=pypi_0
 executing=2.0.1=pypi_0
+eyed3=0.9.7=pypi_0
+filetype=1.2.0=pypi_0
 h11=0.14.0=pypi_0
 httpcore=1.0.2=pypi_0
 httpx=0.25.2=pypi_0
@@ -29,6 +33,7 @@ numpy=1.26.2=pypi_0
 openai=1.3.7=pypi_0
 opencv-python=4.8.1.78=pypi_0
 openssl=1.1.1w=h1a28f6b_0
+packaging=23.2=pypi_0
 parso=0.8.3=pypi_0
 pexpect=4.9.0=pypi_0
 pillow=10.1.0=pypi_0
@@ -51,6 +56,7 @@ sniffio=1.3.0=pypi_0
 sqlite=3.41.2=h80987f9_0
 stack-data=0.6.3=pypi_0
 tk=8.6.12=hb8d0fd4_0
+toml=0.10.2=pypi_0
 tomli=2.0.1=pypi_0
 tqdm=4.66.1=pypi_0
 traitlets=5.14.0=pypi_0

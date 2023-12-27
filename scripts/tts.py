@@ -4,13 +4,67 @@ from tqdm import tqdm
 import subprocess
 import yaml
 import os
+from pydub import AudioSegment
+import numpy as np
+from datetime import timedelta
+from math import floor 
 
 def strip_title(string):
     """
     Config entry, as dicts, keep track of titles as N_title goes here. 
     Return the text after the _
     """
-    return string.split("_")[1]
+    if "_" in string:
+        return string.split("_")[1]
+    else:
+        return string
+
+def get_figures_per_section(dictionary):
+    """
+    Given dictionary config as follows:
+    1_Test Post:
+        - content: The future of writing with AI
+        index: 1
+        - content: the brown boy walks the cat. Adding a sentence!
+        index: 2
+        - content:
+            alt_text: "Screenshot 2023-12-22 at 10.56.47\u202FAM.png"
+            path: Test%20Post%209516e8d6e5994c92a6d7d19245dc27e5/Screenshot_2023-12-22_at_10.56.47_AM.png
+        index: 3
+        2_Next section!:
+        - content: How are you doing?
+        index: 4
+        - content: Let's have a couple paragraphs here. This one has another sentence.
+        index: 5
+        3_Final section:
+        - content: Blah blah blah. Thanks for listening. Blah dog.
+        index: 6
+        - content: I hope my new workflow works great!
+        index: 7
+        date: December 27th 2023
+        md: source/test-post/Test Post 9516e8d6e5994c92a6d7d19245dc27e5.md
+    
+    Check which sections as N_ have a member with "path" and extract the paths
+    """
+    # Extract paths from the sections
+    paths = []
+    for key, value in dictionary.items():
+        if isinstance(value, list):  # Only process sections which are lists
+            images_per_section = []
+            for item in value:
+                if "path" in item.get("content", {}):
+                    images_per_section.append(item["content"]["path"].replace("%20", " "))
+                    
+            paths.append(images_per_section)
+    return paths
+
+def get_cumulative_length(file_list):
+    cumulative_length = 0
+    for filename in file_list:
+        # filepath = os.path.join(directory, filename)
+        audio = AudioSegment.from_file(filename)
+        cumulative_length += len(audio)
+    return cumulative_length / 1000.0  # Convert to seconds
 
 def request_audio(url, payload, headers, querystring, filename):
     """
@@ -44,9 +98,9 @@ if __name__ == "__main__":
     # url_newsread = "https://api.elevenlabs.io/v1/text-to-speech/frqJk20JrduLkgUgHtMR"
 
     headers = {
-    "Accept": "audio/mpeg",
-    "Content-Type": "application/json",
-    "xi-api-key": "c23b31aabf009cb93c8feb5f4ddedc85"
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": "c23b31aabf009cb93c8feb5f4ddedc85"
     }
 
     # Uncomment for higher bitrate (larger files)
@@ -70,20 +124,25 @@ if __name__ == "__main__":
                 "use_speaker_boost": True
             }
         }
+    
     # create dir audio at args.input + audio
     audio_dir = args.input + "audio"
     if not os.path.exists(audio_dir):
         os.makedirs(audio_dir)
         
     first_gen = True
+    section_titles = []
+    see_figures_idx = []
     # iterate over config file that contains headings, text, and figures
     for i, (heading, content) in tqdm(enumerate(config.items())):
         print(f"Generating audio for section {i}, {heading}")
+        heading = strip_title(heading)
         # skip md file path and date
         if heading in ["md", "date"]:
             continue
+        else: 
+            section_titles.append(heading)
         
-        heading = strip_title(heading)
         if first_gen:
             # generate audio file for Title + date
             heading = heading + " was published on " + config["date"] + "."
@@ -107,6 +166,7 @@ if __name__ == "__main__":
             if type(para["content"]) == dict:
                 # copy file source/repeat/see-figure.mp3 as audio_{idx}.mp3
                 os.system(f"cp source/repeat/see-figure.mp3 {audio_dir}/audio_{i}_{idx}.mp3")
+                see_figures_idx.append(TOTAL_GEN_AUDIO_FILES)
                 TOTAL_GEN_AUDIO_FILES += 1
                 pass
             # if para is str, generate audio
@@ -124,15 +184,65 @@ if __name__ == "__main__":
     # if file generated_audio.mp3 already exists, delete it (prevent infinite loop)
     if os.path.exists(audio_dir + '/' + args.output + ".mp3"):
         os.remove(audio_dir + '/' + args.output + ".mp3")
+    if os.path.exists(audio_dir + '/' + args.output +"_podcast"+".mp3"):
+        os.remove(audio_dir + '/' + args.output +"_podcast"+".mp3")
         
     # list mp3 files in audio_dir
-    audio_files = [audio_dir + '/' + f for f in os.listdir(audio_dir) if f.endswith(('.mp3'))]
-    audio_files = sorted(audio_files)
-    
-    output_files = [f"{audio_dir}/audio_{i}.mp3" for i in range(0, TOTAL_GEN_AUDIO_FILES)]
+    audio_files_short = [audio_dir + '/' + f for f in os.listdir(audio_dir) if f.endswith(('.mp3'))]
+    audio_files = sorted(audio_files_short)
+        
+    # output_files = [f"{audio_dir}/audio_{i}.mp3" for i in range(0, TOTAL_GEN_AUDIO_FILES)]
     print(f"Sorted audio files {audio_files}")
+
+    # for podcast version remove "see figures" from see_figures_idx of files above
+    podcast_files = [f for i, f in enumerate(audio_files) if i not in see_figures_idx]
+
     subprocess.run(["ffmpeg", "-i", "concat:" + "|".join(audio_files), "-c", "copy", audio_dir + '/' + args.output+".mp3"])
+    subprocess.run(["ffmpeg", "-i", "concat:" + "|".join(podcast_files), "-c", "copy", audio_dir + '/' + args.output+"_podcast"+".mp3"])
 
     # TODO remove all acronyms and other filtering, some that are bad are SOTA and MoE
     # TODO add seperate voice for quotes / quote detection
     # TODO see image audio for figures
+    
+    # Get length of the sections and print in podcast format
+    # get indicies in between first set of _ (e.g. audio_N_Y.mp3, get unique Ns)
+    sections = np.unique([s.split("_")[1] for s in audio_files_short])
+    sections = [str(s) for s in sections]
+    
+    def print_if_hour(seconds):
+        if seconds > 3600:
+            return str(timedelta(seconds=seconds))
+        elif seconds < 600:
+            return str(timedelta(seconds=seconds))[3:]
+        else:
+            return str(timedelta(seconds=seconds))[2:]
+    
+    # TODO make below work for multiple figures :/ 
+    # iterate over headings for chapters, take first figure per section
+    print(f"Printing podcast chapter versions (does not include `see figure` audio):")
+    print(f"----------------------------------")
+    files_list_of_lists = []
+    for s in sections:
+        files = [f for f in audio_files_short if f.split("_")[1] == s]
+        files_list_of_lists.append(files)
+    section_lens = [get_cumulative_length(l) for l in files_list_of_lists]
+    print(f"Cumulative length of all audio files: {section_lens} seconds")
+
+    cur_len = 0
+    for section_title, section_len in zip(section_titles, section_lens):
+        cur_len += floor(section_len)
+        print(f"{print_if_hour(cur_len)} {section_title}")
+    
+    print(f"----------------------------------")
+    print(f"Printing youtube chapter versions:")
+    print(f"----------------------------------")
+    files_list_of_lists = []
+    for s in sections:
+        files = [f for f in podcast_files if f.split("_")[1] == s]
+        files_list_of_lists.append(files)
+    section_lens = [get_cumulative_length(l) for l in files_list_of_lists]
+
+    cur_len = 0
+    for section_title, section_len in zip(section_titles, section_lens):
+        cur_len += floor(section_len)
+        print(f"{print_if_hour(cur_len)} {section_title}")
