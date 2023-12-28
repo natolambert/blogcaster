@@ -31,17 +31,17 @@ Audio gen:
 python tts.py --input=source/test-post/
 ```
 
-Audio add music + outro:
+Audio add music + outro (not currently using this, need to think about music more):
 ```
 python add-music.py --input=audio/20231129-synthetic.mp3
 ```
 
 Images:
 ```
-python ttv-generate.py --input=raw/2023-29-11-synthetic.txt
+python ttv-generate.py --input=source/test-post/
 ```
 
 Video:
 ```
-python ttv-merge.py --audio=audio/20231129-synthetic.mp3 --images=images/
+python ttv-merge.py --input=source/test-post/
 ```
