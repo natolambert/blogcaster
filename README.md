@@ -6,7 +6,7 @@ This takes a markdown file that you would normally convert to HTML for Substack 
 1. Elevenlabs.io's new multilingual models for audio generation.
 2. OpenAI's DALLE3 for 
 
-It costs a few dollars a post if you publish monthly. I'm on the $22/month Elevenlabs plan based on my Substack wordcount and each post costs $2 to 8 of DALLE API credits ($.08 per widescreen image).
+It costs a few dollars a post if you publish monthly. I'm on the $22/month Elevenlabs plan based on my Substack wordcount and each post costs $2 to 8 of DALLE API credits (0.08 per widescreen image).
 
 Expand your audience and have some fun!
 
