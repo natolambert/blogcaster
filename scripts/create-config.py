@@ -1,3 +1,5 @@
+# Please shoot me a message, open an issue, or comment on Interconnects if you're using this code! I'd love to know.
+
 import argparse
 import os
 import re

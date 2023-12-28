@@ -1,3 +1,5 @@
+# Please shoot me a message, open an issue, or comment on Interconnects if you're using this code! I'd love to know.
+
 import argparse
 import os
 import subprocess
@@ -60,21 +62,23 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, required=True, help="input directory to work with")
     parser.add_argument("--output", type=str, default="generated_audio", help="output mp3 file path")
+    parser.add_argument("--elelabs_voice", type=str, default="JOTluSP6086ORVtQED4S", help="11labs voice id")
     parser.add_argument("--start_heading", type=str, default="", help="start at section named in generation")
+    parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
+    parser.add_argument("--figure_audio", type=str, default="source/repeat/see-figure.mp3", help="figure audio path")
     args = parser.parse_args()
+    
     TOTAL_GEN_AUDIO_FILES = 0
 
-    # example usage in comments for this python script tts.py
-    # python tts.py --input source/test-post
-
-    CHUNK_SIZE = 1024
-    url_nathan = "https://api.elevenlabs.io/v1/text-to-speech/JOTluSP6086ORVtQED4S"
+    CHUNK_SIZE = 1024 # size of chunks to write to file / download
+    url_nathan = f"https://api.elevenlabs.io/v1/text-to-speech/{args.elelabs_voice}"
     # url_newsread = "https://api.elevenlabs.io/v1/text-to-speech/frqJk20JrduLkgUgHtMR"
 
+    API_KEY = MY_ENV_VAR = os.getenv("ELEVENLABS_API_KEY")
     headers = {
         "Accept": "audio/mpeg",
         "Content-Type": "application/json",
-        "xi-api-key": "c23b31aabf009cb93c8feb5f4ddedc85",
+        "xi-api-key": MY_ENV_VAR, # "c23b31aabf009cb93c8feb5f4ddedc85",
     }
 
     # Uncomment for higher bitrate (larger files)
@@ -85,7 +89,7 @@ if __name__ == "__main__":
     with open(args.input + "config.yml", "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
-    # audio_config =
+    # audio_config for 11labs, can change these
     payload = {
         "model_id": "eleven_multilingual_v2",
         "voice_settings": {"similarity_boost": 0.75, "stability": 0.50, "style": 0.05, "use_speaker_boost": True},
@@ -137,12 +141,14 @@ if __name__ == "__main__":
             # convert IDX to 2 digit string
             idx = str(idx).zfill(2)
 
-            # if para is dict, do nothing
+            # if para is dict, prepare special audio to indicate figure
             if isinstance(para["content"], dict):
-                # copy file source/repeat/see-figure.mp3 as audio_{idx}.mp3
-                os.system(f"cp source/repeat/see-figure.mp3 {audio_dir}/audio_{i}_{idx}.mp3")
-                see_figures_idx.append(TOTAL_GEN_AUDIO_FILES)
-                TOTAL_GEN_AUDIO_FILES += 1
+                # [OPTIONAL]  copy file source/repeat/see-figure.mp3 as audio_{idx}.mp3
+                # only copy if it exists, otherwise it ignores the figures
+                if os.path.exists(args.figure_audio):
+                    os.system(f"cp {args.figure_audio} {audio_dir}/audio_{i}_{idx}.mp3")
+                    see_figures_idx.append(TOTAL_GEN_AUDIO_FILES)
+                    TOTAL_GEN_AUDIO_FILES += 1
                 pass
             # if para is str, generate audio
             elif isinstance(para["content"], str):
@@ -171,9 +177,12 @@ if __name__ == "__main__":
     # for podcast version remove "see figures" from see_figures_idx of files above
     podcast_files = [f for i, f in enumerate(audio_files) if i not in see_figures_idx]
 
-    # add source/repeat/farewell.mp3 to end of list (here to not mess with later code)
-    audio_files.append("source/repeat/farewell.mp3")
-    podcast_files.append("source/repeat/farewell.mp3")
+    # [OPTIONAL] add source/repeat/farewell.mp3 to end of list (here to not mess with later code)
+    # only do this if the farewell audio exists
+    if os.path.exists(args.farewell_audio):
+        audio_files.append(args.farewell_audio)
+        podcast_files.append(args.farewell_audio)
+        
     subprocess.run(
         ["ffmpeg", "-i", "concat:" + "|".join(audio_files), "-c", "copy", audio_dir + "/" + args.output + ".mp3"]
     )
@@ -222,7 +231,7 @@ if __name__ == "__main__":
     print(next(iter(config.values()))[0]["content"])
     print("This is AI generated audio with Python and 11Labs")
     print("Source code: https://github.com/natolambert/interconnects-tools")
-    print("Original post: https://www.interconnects.ai/p/TODO")
+    print("Original post: TODO")
     print()
     cur_len = 0
     for section_title, section_len in zip(section_titles, section_lens):
