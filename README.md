@@ -1,5 +1,7 @@
 # Interconnects Tools for Multimodal Blogging!
 
+Watch an example video [here](https://www.youtube.com/watch?v=0i0aBJGgtpk)!
+
 Install from `requirements.txt`
 ```
 conda create -n media python=3.10
@@ -11,6 +13,7 @@ Right now this is not on pypi, run as following:
 git clone https://github.com/natolambert/interconnects-tools
 cd interconnects-tools
 ```
+
 
 **Notes on using generated audio**: 
 In my distribution, I make it clear that it is made via AI, you should do the same.
@@ -49,7 +52,7 @@ source/
 |   └- post-title-name/
 |       | img0.png
 |       | ...
-|       └─ imgN.pnd
+|       └─ imgN.png
 | ...
 └─- post-title-two/
 | ...
