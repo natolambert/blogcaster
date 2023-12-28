@@ -1,4 +1,4 @@
-# Tools for blogging!
+# Interconnects Tools for Multimodal Blogging!
 
 Install from `requirements.txt`
 ```

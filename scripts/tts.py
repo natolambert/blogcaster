@@ -67,18 +67,18 @@ if __name__ == "__main__":
     parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
     parser.add_argument("--figure_audio", type=str, default="source/repeat/see-figure.mp3", help="figure audio path")
     args = parser.parse_args()
-    
+
     TOTAL_GEN_AUDIO_FILES = 0
 
-    CHUNK_SIZE = 1024 # size of chunks to write to file / download
+    CHUNK_SIZE = 1024  # size of chunks to write to file / download
     url_nathan = f"https://api.elevenlabs.io/v1/text-to-speech/{args.elelabs_voice}"
     # url_newsread = "https://api.elevenlabs.io/v1/text-to-speech/frqJk20JrduLkgUgHtMR"
 
-    API_KEY = MY_ENV_VAR = os.getenv("ELEVENLABS_API_KEY")
+    API_KEY = MY_ENV_VAR = os.getenv("ELELABS_API_KEY")
     headers = {
         "Accept": "audio/mpeg",
         "Content-Type": "application/json",
-        "xi-api-key": MY_ENV_VAR, # "c23b31aabf009cb93c8feb5f4ddedc85",
+        "xi-api-key": MY_ENV_VAR,  # "c23b31aabf009cb93c8feb5f4ddedc85",
     }
 
     # Uncomment for higher bitrate (larger files)
@@ -182,7 +182,7 @@ if __name__ == "__main__":
     if os.path.exists(args.farewell_audio):
         audio_files.append(args.farewell_audio)
         podcast_files.append(args.farewell_audio)
-        
+
     subprocess.run(
         ["ffmpeg", "-i", "concat:" + "|".join(audio_files), "-c", "copy", audio_dir + "/" + args.output + ".mp3"]
     )
