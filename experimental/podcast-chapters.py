@@ -1,5 +1,6 @@
-from eyed3.id3.frames import ImageFrame
 import eyed3
+from eyed3.id3.frames import ImageFrame
+
 
 def get_figures_per_section(dictionary):
     """
@@ -25,7 +26,7 @@ def get_figures_per_section(dictionary):
         index: 7
         date: December 27th 2023
         md: source/test-post/Test Post 9516e8d6e5994c92a6d7d19245dc27e5.md
-    
+
     Check which sections as N_ have a member with "path" and extract the paths
     """
     # Extract paths from the sections
@@ -36,7 +37,7 @@ def get_figures_per_section(dictionary):
             for item in value:
                 if "path" in item.get("content", {}):
                     images_per_section.append(item["content"]["path"].replace("%20", " "))
-                    
+
             paths.append(images_per_section)
     return paths
 
@@ -50,22 +51,23 @@ def embed_chapters_with_images(audio_file, chapters, images):
     # Add chapters
     for i, chapter in enumerate(chapters):
         start_time, end_time, title = chapter
-        audio.tag.chapters.set(title, start_time, end_time) #, title)
+        audio.tag.chapters.set(title, start_time, end_time)  # , title)
         # audio.tag.chapters.set(i, start_time, end_time, title)
 
         # Add image for the chapter if available
         if i < len(images) and images[i] is not None:
-            with open(images[i], 'rb') as img_file:
+            with open(images[i], "rb") as img_file:
                 # img_data = img_file.read()
                 # import ipdb; ipdb.set_trace()
-                audio.tag.images.set(ImageFrame.FRONT_COVER, img_file.read(), "image/png", u"Figure for section")
+                audio.tag.images.set(ImageFrame.FRONT_COVER, img_file.read(), "image/png", "Figure for section")
             # import ipdb; ipdb.set_trace()
             # audio.tag.images.set(3, img_data, "image/png", u"Figure for section")
 
     audio.tag.save()
 
+
 # Example usage
-audio_file = audio_dir + '/' + args.output+".mp3"
+audio_file = audio_dir + "/" + args.output + ".mp3"
 chapters = []
 files = []
 start = 0
@@ -73,7 +75,7 @@ for l, s in zip(section_lens, section_titles):
     chapters.append((start, start + l, s))
     files.append([])
     start += l
-    
+
 # # images = ['path/to/intro.jpg', None, 'path/to/chapter2.jpg']  # paths to images, None where no image is available
 
 list_of_figs = get_figures_per_section(config)

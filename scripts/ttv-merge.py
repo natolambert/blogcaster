@@ -1,8 +1,10 @@
-import os
 import argparse
+import os
+
 import cv2
-from moviepy.editor import VideoFileClip, AudioFileClip, ImageClip, concatenate_videoclips, CompositeAudioClip
 import yaml
+from moviepy.editor import AudioFileClip, ImageClip, concatenate_videoclips
+
 
 def adjust_audio_durations(audio_durations, is_image):
     # Ensure the lists are of the same length
@@ -36,19 +38,20 @@ def adjust_audio_durations(audio_durations, is_image):
 
     return adjusted_durations
 
+
 def images_to_video(directory):
     image_dir = os.path.join(directory, "images")
     audio_dir = os.path.join(directory, "audio")
     audio_file = os.path.join(audio_dir, "generated_audio.mp3")
-    
+
     # get length of every audio file in audio_dir other than generated_audio.mp3 and generated_audio_podcast.mp3
-    audio_files = [f for f in os.listdir(audio_dir) if f.endswith(('.mp3'))]
+    audio_files = [f for f in os.listdir(audio_dir) if f.endswith((".mp3"))]
     audio_files = sorted(audio_files)
     audio_files = [f for f in audio_files if f not in ["generated_audio.mp3", "generated_audio_podcast.mp3"]]
     audio_files = [os.path.join(audio_dir, f) for f in audio_files]
     audio_clips = [AudioFileClip(f) for f in audio_files]
     audio_durations = [c.duration for c in audio_clips]
-    
+
     # load config file config.yml from directory, get boolean list of which are figures
     with open(directory + "config.yml", "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
@@ -65,27 +68,29 @@ def images_to_video(directory):
                     is_image.append(True)
                 else:
                     is_image.append(False)
-                    
-    
-    # for items where is_image is True, increase the time in audio_durations 
+
+    # for items where is_image is True, increase the time in audio_durations
     # by .25 of the preceeding paragraph and .5 of the following paragraph
     # reduce the time of the preceeding and following image accordingly
     # if image is at the beginning or end, only increase the following or preceeding paragraph
-    new_audio_durations = adjust_audio_durations(audio_durations, is_image)        
-    
+    new_audio_durations = adjust_audio_durations(audio_durations, is_image)
+
     # Get all image files in the directory
-    image_files = [f for f in os.listdir(image_dir) if f.endswith(('.jpg', '.jpeg', '.png', '.webp'))]
+    image_files = [f for f in os.listdir(image_dir) if f.endswith((".jpg", ".jpeg", ".png", ".webp"))]
+    image_files = sorted(image_files)
+    
+    assert len(image_files) == len(new_audio_durations), "Number of images and audio files must be the same"
     
     # Load the first image to get dimensions
     first_image = cv2.imread(os.path.join(image_dir, image_files[0]))
-    height, width, _ = first_image.shape
-    
+    # height, width, _ = first_image.shape
+
     # load all images
     all_images = [cv2.imread(os.path.join(image_dir, image_file)) for image_file in image_files[1:]]
     all_images = [first_image] + all_images
     # check coloring with cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
     all_images = [cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) for frame in all_images]
-    
+
     # load audio
     audio_clip = AudioFileClip(audio_file)
     # audio_duration = audio_clip.duration
@@ -96,18 +101,20 @@ def images_to_video(directory):
 
     concat_clip = concatenate_videoclips(clips, method="compose")
     concat_clip_audio = concat_clip.set_audio(audio_clip)
-    concat_clip_audio.write_videofile("new_filename.mp4", 
-                                fps=30,
-                                codec='libx264', 
-                                audio_codec='aac', 
-                                temp_audiofile='temp-audio.m4a', 
-                                remove_temp=True
-                            )
+    concat_clip_audio.write_videofile(
+        "new_filename.mp4",
+        fps=30,
+        codec="libx264",
+        audio_codec="aac",
+        temp_audiofile="temp-audio.m4a",
+        remove_temp=True,
+    )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, help="directory with images, config, and audio")
     args = parser.parse_args()
-    
+
     # Convert images and audio to video
     images_to_video(args.input)
