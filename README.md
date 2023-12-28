@@ -25,6 +25,7 @@ Generate the config file (that contains the paragraphs etc)
 ```
 python create-config source/test-post/ --date="24 December 2023"
 ```
+*Note: it is recommended to skim the config and combine things like lists, otherwise generation is split into many more parts and needlessly across images at times.*
 
 Audio gen:
 ```

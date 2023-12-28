@@ -36,19 +36,27 @@ def request_audio(url, payload, headers, querystring, filename):
             if chunk:
                 part_file.write(chunk)
     """
-    response = requests.post(url, json=payload, headers=headers, params=querystring)
-    with open(filename, 'wb') as part_file:
-        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-            if chunk:
-                part_file.write(chunk)
+    # remove \n and > from payload text
+    payload["text"] = payload["text"].replace("\n", " ")
+    payload["text"] = payload["text"].replace(">", "")
+    
+    if not os.path.exists(filename):
+        print("-> audio request send to 11labs")
+        response = requests.post(url, json=payload, headers=headers, params=querystring)
+        with open(filename, 'wb') as part_file:
+            for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                if chunk:
+                    part_file.write(chunk)
+    else:
+        print(f"-> audio file {filename} already exists, skipping request")
 
 if __name__ == "__main__":
     # import argparse and define txt file path and output path
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, required=True, help="input directory to work with")
     parser.add_argument("--output", type=str, default="generated_audio", help="output mp3 file path")
+    parser.add_argument("--start_heading", type=str, default="", help="start at section named in generation")
     args = parser.parse_args()
-    
     TOTAL_GEN_AUDIO_FILES = 0
                     
     # example usage in comments for this python script tts.py
@@ -89,12 +97,21 @@ if __name__ == "__main__":
         os.makedirs(audio_dir)
         
     first_gen = True
+    skip_found = False
     section_titles = []
     see_figures_idx = []
     # iterate over config file that contains headings, text, and figures
     for i, (heading, content) in tqdm(enumerate(config.items())):
         print(f"Generating audio for section {i}, {heading}")
+        if len(args.start_heading) > 0:
+            if heading == args.start_heading or skip_found:
+                skip_found = True
+                pass
+            else:
+                continue
+            
         heading = strip_title(heading)
+
         # skip md file path and date
         if heading in ["md", "date"]:
             continue
@@ -110,8 +127,7 @@ if __name__ == "__main__":
         # generate audio for heading
         
         fname = f"{audio_dir}/audio_{i}_0.mp3"
-        if not os.path.exists(fname):
-            request_audio(url_nathan, payload, headers, querystring, fname)
+        request_audio(url_nathan, payload, headers, querystring, fname)
         TOTAL_GEN_AUDIO_FILES += 1
         
         # iterate over list of dicts in content and 
@@ -131,8 +147,7 @@ if __name__ == "__main__":
             elif type(para["content"]) == str:
                 payload["text"] = para["content"]
                 fname = f"{audio_dir}/audio_{i}_{idx}.mp3"
-                if not os.path.exists(fname):
-                    request_audio(url_nathan, payload, headers, querystring, fname)
+                request_audio(url_nathan, payload, headers, querystring, fname)
                 TOTAL_GEN_AUDIO_FILES += 1
             else:
                 print("Config Error: para is neither dict nor str")

@@ -66,7 +66,7 @@ def parse_markdown_to_dict(md_content):
     paragraph_index = 1
     section_index = 0
 
-    for line in md_content.split('\n'):
+    for line in md_content.split('\n\n'):
         if line.startswith('---'):
             continue
         elif line.strip() == ">":
@@ -116,6 +116,8 @@ def markdown_to_yaml(md_filename, yaml_filename, date):
     Convert markdown file to YAML file.
     """
     md_content = read_markdown_file(md_filename)
+    # print total number of characters in md_content
+    print(f"INFO: Total number of characters in markdown file: {len(md_content)}")
     sections_dict = parse_markdown_to_dict(md_content)
     
     # add markdown filename to dictionary

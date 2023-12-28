@@ -81,15 +81,6 @@ if __name__ == "__main__":
     with open(args.input + "config.yml", "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
-        
-    def split_string_into_segments(text, paragraphs_per_segment=1):
-        paragraphs = text.split('\n\n')  # Assuming paragraphs are separated by two newline characters
-        segments = [paragraphs[i:i + paragraphs_per_segment] for i in range(0, len(paragraphs), paragraphs_per_segment)]
-        
-        result_segments = ['\n\n'.join(segment) for segment in segments]
-        
-        return result_segments
-
     prompts = []
     first_gen = True
     # iterate over yaml file, record text per paragraph in string, don't create images for figures
@@ -105,6 +96,7 @@ if __name__ == "__main__":
             first_gen = False
 
         prompts.append(heading)
+        # TODO if prompt is less than a certain length, merge with previous?
         
         # iterate over list of dicts in content and 
         for para in content:            
