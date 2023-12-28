@@ -78,9 +78,9 @@ def images_to_video(directory):
     # Get all image files in the directory
     image_files = [f for f in os.listdir(image_dir) if f.endswith((".jpg", ".jpeg", ".png", ".webp"))]
     image_files = sorted(image_files)
-    
+
     assert len(image_files) == len(new_audio_durations), "Number of images and audio files must be the same"
-    
+
     # Load the first image to get dimensions
     first_image = cv2.imread(os.path.join(image_dir, image_files[0]))
     # height, width, _ = first_image.shape

@@ -138,14 +138,14 @@ if __name__ == "__main__":
             idx = str(idx).zfill(2)
 
             # if para is dict, do nothing
-            if type(para["content"]) == dict:
+            if isinstance(para["content"], dict):
                 # copy file source/repeat/see-figure.mp3 as audio_{idx}.mp3
                 os.system(f"cp source/repeat/see-figure.mp3 {audio_dir}/audio_{i}_{idx}.mp3")
                 see_figures_idx.append(TOTAL_GEN_AUDIO_FILES)
                 TOTAL_GEN_AUDIO_FILES += 1
                 pass
             # if para is str, generate audio
-            elif type(para["content"]) == str:
+            elif isinstance(para["content"], str):
                 payload["text"] = para["content"]
                 fname = f"{audio_dir}/audio_{i}_{idx}.mp3"
                 request_audio(url_nathan, payload, headers, querystring, fname)
@@ -211,16 +211,17 @@ if __name__ == "__main__":
     for s in sections:
         files = [f for f in audio_files_short if f.split("_")[1] == s]
         files_list_of_lists.append(files)
-    section_lens = [get_cumulative_length(l) for l in files_list_of_lists]
+    section_lens = [get_cumulative_length(list_l) for list_l in files_list_of_lists]
     total_len = sum(section_lens)
     print(f"Cumulative length of all audio files: {section_lens} seconds")
-    print(f"----------------------------------")
-    print(f"Printing podcast chapter versions (does not include `see figure` audio):")
-    print(f"----------------------------------")
+    print("----------------------------------")
+    print("Printing podcast chapter versions (does not include `see figure` audio):")
+    print("----------------------------------")
 
     print(section_titles[0])
-    print(next(iter(config.values()))[0]['content'])
-    print("This is AI generated audio with Python and 11Labs. Source code can be found here: https://github.com/natolambert/interconnects-tools")
+    print(next(iter(config.values()))[0]["content"])
+    print("This is AI generated audio with Python and 11Labs")
+    print("Source code: https://github.com/natolambert/interconnects-tools")
     print("Original post: https://www.interconnects.ai/p/TODO")
     print()
     cur_len = 0
@@ -228,18 +229,18 @@ if __name__ == "__main__":
         print(f"{print_if_hour(floor(cur_len), total_len)} {section_title}")
         cur_len += section_len
 
-    print(f"----------------------------------")
-    print(f"Printing youtube chapter versions:")
-    print(f"----------------------------------")
+    print("----------------------------------")
+    print("Printing youtube chapter versions:")
+    print("----------------------------------")
     files_list_of_lists = []
     for s in sections:
         files = [f for f in podcast_files if f.split("_")[1] == s]
         files_list_of_lists.append(files)
-    section_lens = [get_cumulative_length(l) for l in files_list_of_lists]
+    section_lens = [get_cumulative_length(list_l) for list_l in files_list_of_lists]
     total_len = sum(section_lens)
 
     # print first item of the first value content in config, which is the substitle
-    
+
     cur_len = 0
     for section_title, section_len in zip(section_titles, section_lens):
         print(f"{print_if_hour(floor(cur_len), total_len)} {section_title}")

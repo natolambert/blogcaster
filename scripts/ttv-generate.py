@@ -1,14 +1,17 @@
 import argparse
 import os
 import time
-from multiprocessing import Pool, current_process
+from multiprocessing import Pool
 
 import requests
 import yaml
 from openai import OpenAI
 from tqdm import tqdm
 
-SYSTEM_PROMPT = "The following instructions are text taken from a blog post on AI and ML, please create pretty images to accompany an audio version of this post: \n\n"
+SYSTEM_PROMPT = (
+    "The following instructions are text taken from a blog post on AI and ML,"
+    "please create pretty images to accompany an audio version of this post: \n\n"
+)
 client = OpenAI()
 
 
@@ -69,7 +72,7 @@ def get_image(idx, string):
     except Exception as e:
         print(f"Error: {e}")
 
-    time.sleep(22) #20sec was rate limit erroring
+    time.sleep(22)  # 20sec was rate limit erroring
 
 
 if __name__ == "__main__":
@@ -106,7 +109,7 @@ if __name__ == "__main__":
         # iterate over list of dicts in content and
         for para in content:
             # if para is dict, do nothing
-            if type(para["content"]) == dict:
+            if isinstance(para["content"], dict):
                 # copy png from source to gen-images, rename with appropriate idx
                 idx = para["index"]
                 path = para["content"]["path"]
@@ -115,7 +118,7 @@ if __name__ == "__main__":
                 prompts.append(None)  # for keeping track of index
 
             # if para is str, generate audio
-            elif type(para["content"]) == str:
+            elif isinstance(para["content"], str):
                 prompts.append(para["content"])
             else:
                 print("Config Error: para is neither dict nor str")
