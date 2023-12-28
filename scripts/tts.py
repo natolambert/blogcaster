@@ -155,9 +155,13 @@ if __name__ == "__main__":
     # for podcast version remove "see figures" from see_figures_idx of files above
     podcast_files = [f for i, f in enumerate(audio_files) if i not in see_figures_idx]
 
+    # add source/repeat/farewell.mp3 to end of list (here to not mess with later code)
+    audio_files.append("source/repeat/farewell.mp3")
+    podcast_files.append("source/repeat/farewell.mp3")
     subprocess.run(["ffmpeg", "-i", "concat:" + "|".join(audio_files), "-c", "copy", audio_dir + '/' + args.output+".mp3"])
     subprocess.run(["ffmpeg", "-i", "concat:" + "|".join(podcast_files), "-c", "copy", audio_dir + '/' + args.output+"_podcast"+".mp3"])
-
+    podcast_files = podcast_files[:-1]
+    
     # TODO remove all acronyms and other filtering, some that are bad are SOTA and MoE
     # TODO add seperate voice for quotes / quote detection
     

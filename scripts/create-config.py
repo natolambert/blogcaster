@@ -67,19 +67,32 @@ def parse_markdown_to_dict(md_content):
     section_index = 0
 
     for line in md_content.split('\n'):
-        if line.startswith('#'):
+        if line.startswith('---'):
+            continue
+        elif line.strip() == ">":
+            continue
+        elif line.startswith('#'):
             # New section
             section_index += 1
             current_section = re.sub(r'#+\s*', '', line).strip()
-            sections[f"{section_index}_" + current_section] = []
+            sections[f"{str(section_index).zfill(2)}_" + current_section] = []
         elif line.strip():
             if line.strip().startswith('!['):
                 # Figure found
                 alt_text, img_path = re.findall(r'\[([^]]+)\]\(([^)]+)\)', line)[0]
-                sections[f"{section_index}_" + current_section].append({'index': paragraph_index, 'content': {'alt_text': alt_text, 'path': img_path}})
+                sections[f"{str(section_index).zfill(2)}_" + current_section].append({'index': paragraph_index, 'content': {'alt_text': alt_text, 'path': img_path}})
             else:
                 # Regular paragraph
-                sections[f"{section_index}_" + current_section].append({'index': paragraph_index, 'content': unidecode.unidecode(line.strip())})
+                text = line.strip()
+                text = text.replace(u"\u2019", "'")
+                # remove :, -, and leading space from text
+                text = text.replace(":", "")
+                text = text.replace("-", "")
+                if text.startswith(" "):
+                    text = text[1:]
+                # remove the urls from text. It's in [xyz](www) format, extract xyz
+                text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+                sections[f"{str(section_index).zfill(2)}_" + current_section].append({'index': paragraph_index, 'content': unidecode.unidecode(text)})
             paragraph_index += 1
 
     return sections
@@ -121,5 +134,6 @@ if __name__ == "__main__":
     
     markdown_to_yaml(args.directory + markdown_file, args.directory + "config.yml", args.date)
     
+    # TODO read quotes and add to config.yml
     
     print(f"INFO: Created post config file at {args.directory + 'config.yml'}")
