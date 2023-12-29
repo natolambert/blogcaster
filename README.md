@@ -4,11 +4,11 @@ Watch an example video [here](https://www.youtube.com/watch?v=0i0aBJGgtpk)!
 
 This takes a markdown file that you would normally convert to HTML for Substack or upload elsewhere and convert it directly into `*.mp3` files for podcasts and `*.mp4` files for YouTube to tap into new audiences. It uses two state-of-the-art generative AI tools/systems:
 1. Elevenlabs.io's new multilingual models for audio generation.
-2. OpenAI's DALLE3 for 
+2. OpenAI's DALLE3 for fun images.
 
 It costs a few dollars a post if you publish monthly. I'm on the $22/month Elevenlabs plan based on my Substack wordcount and each post costs $2 to 8 of DALLE API credits ($.08 per widescreen image).
 
-Expand your audience and have some fun!
+Expand your audience and have some fun! You can use my [Elevenlabs referral link](elevenlabs.io/?from=partnerbruce1418) if you're going to try this out!
 
 ![Multimodal blog reality sketch](https://github.com/natolambert/interconnects-tools/assets/10695622/096b2f55-f14f-4484-b780-1cfb0bc898ee)
 
