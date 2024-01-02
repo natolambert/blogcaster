@@ -8,7 +8,7 @@ This takes a markdown file that you would normally convert to HTML for Substack 
 
 It costs a few dollars a post if you publish monthly. I'm on the $22/month Elevenlabs plan based on my Substack wordcount and each post costs $2 to 8 of DALLE API credits (0.08 per widescreen image).
 
-Expand your audience and have some fun! You can use my [Elevenlabs referral link](elevenlabs.io/?from=partnerbruce1418) if you're going to try this out!
+Expand your audience and have some fun! You can use my [Elevenlabs referral link](https://elevenlabs.io/?from=partnerbruce1418) if you're going to try this out!
 
 ![Multimodal blog reality sketch](https://github.com/natolambert/interconnects-tools/assets/10695622/096b2f55-f14f-4484-b780-1cfb0bc898ee)
 
