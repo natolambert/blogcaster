@@ -59,7 +59,7 @@ def get_image(idx, string):
     except Exception as e:
         print(f"Error: {e}")
 
-    time.sleep(22)  # 20sec was rate limit erroring
+    time.sleep(23)  # 20sec was rate limit erroring
 
 
 if __name__ == "__main__":
@@ -98,7 +98,7 @@ if __name__ == "__main__":
             # if para is dict, do nothing
             if isinstance(para["content"], dict):
                 # copy png from source to gen-images, rename with appropriate idx
-                idx = para["index"]
+                idx = str(para["index"]).zfill(3)
                 path = para["content"]["path"]
                 # move to args.input + gen-images as name img_{idx}.png
                 os.system(f"cp {args.input}{path} {args.input}images/img_{idx}.png")

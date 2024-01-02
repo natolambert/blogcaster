@@ -48,11 +48,14 @@ def request_audio(url, payload, headers, querystring, filename):
 
     if not os.path.exists(filename):
         print("-> audio request send to 11labs")
-        response = requests.post(url, json=payload, headers=headers, params=querystring)
-        with open(filename, "wb") as part_file:
-            for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                if chunk:
-                    part_file.write(chunk)
+        try:
+            response = requests.post(url, json=payload, headers=headers, params=querystring)
+            with open(filename, "wb") as part_file:
+                for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                    if chunk:
+                        part_file.write(chunk)
+        except Exception as e:
+            print(f"Error: {e}")
     else:
         print(f"-> audio file {filename} already exists, skipping request")
 
@@ -74,11 +77,11 @@ if __name__ == "__main__":
     url_nathan = f"https://api.elevenlabs.io/v1/text-to-speech/{args.elelabs_voice}"
     # url_newsread = "https://api.elevenlabs.io/v1/text-to-speech/frqJk20JrduLkgUgHtMR"
 
-    API_KEY = MY_ENV_VAR = os.getenv("ELELABS_API_KEY")
+    API_KEY = os.getenv("ELELABS_API_KEY")
     headers = {
         "Accept": "audio/mpeg",
         "Content-Type": "application/json",
-        "xi-api-key": MY_ENV_VAR,  # "c23b31aabf009cb93c8feb5f4ddedc85",
+        "xi-api-key": API_KEY,  # "c23b31aabf009cb93c8feb5f4ddedc85",
     }
 
     # Uncomment for higher bitrate (larger files)

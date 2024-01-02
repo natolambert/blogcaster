@@ -34,7 +34,7 @@ cd interconnects-tools
 ```
 
 ### API Keys
-To set the OpenAI API key, do the following ([from the docs](https://platform.openai.com/docs/quickstart?context=python)):
+To set the OpenAI API key, add the following ([from the docs](https://platform.openai.com/docs/quickstart?context=python)) to your `bashrc`:
 ```
 export OPENAI_API_KEY='your-api-key-here'
 ```
@@ -42,7 +42,7 @@ Similarly, for 11labs:
 ```
 export ELELABS_API_KEY='your-api-key-here'
 ```
-
+Additionally, the audio/visual tools I used require `ffmpeg`.
 **Blogs using these tools**:
 (open an issue to be featured!)
 
@@ -73,6 +73,8 @@ Generate the config file (that contains the paragraphs etc)
 ```
 python scripts/create-config.py source/test-post/ --date="24 December 2023"
 ```
+The image paths can be wrong if you change them on your local machine post export, double check!
+
 *Note: it is recommended to skim the config and combine things like lists, otherwise generation is split into many more parts and needlessly across images at times.*
 
 ### Audio 
@@ -125,3 +127,8 @@ python scripts/ttv-generate.py --input=source/test-post/
 ```
 python scripts/ttv-merge.py --input=source/test-post/
 ```
+
+## TODO list
+Keeping note of features I want to add in a lazy manner:
+* Adding list of figures to podcast shownotes + link because inserting them is hard.
+* Verify that the try-except block in `tts.py` works as intended.
