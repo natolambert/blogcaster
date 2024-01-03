@@ -128,6 +128,35 @@ python scripts/ttv-generate.py --input=source/test-post/
 python scripts/ttv-merge.py --input=source/test-post/
 ```
 
+### Generated research  video
+This section requires `imagemagick`:
+```
+brew install imagemagick
+```
+Source code is provided in `examples/research-talk`.
+Ultimately, you must download a pdf of slides from google slides / powerpoint / etc and write a script.
+
+To create the PNG files in the right format, do the following:
+```
+convert -density 300 examples/research-talk/research-talk/talk.pdf -quality 100 examples/research-talk/images/img_%03d.png
+```
+
+To use the `interconnects-tools`:
+```
+python scripts/create-config.py examples/research-talk/
+python scripts/tts.py --input=examples/research-talk/ --ignore_title
+python scripts/ttv-merge.py --input=examples/research-talk/ --ignore_title
+```
+
+To speed up the final video to your desired length, do the math, then use the following command:
+```
+ffmpeg -i input.mp4 -filter_complex "[0:v]setpts=PTS/(SPEED_FACTOR)[v];[0:a]atempo=SPEED_FACTOR[a]" -map "[v]" -map "[a]" output.mp4
+```
+Here's an example for 10%:
+```
+ffmpeg -i input.mp4 -filter_complex "[0:v]setpts=PTS/1.1[v];[0:a]atempo=1.1[a]" -map "[v]" -map "[a]" output.mp4
+```
+
 ## TODO list
 Keeping note of features I want to add in a lazy manner:
 * Adding list of figures to podcast shownotes + link because inserting them is hard.

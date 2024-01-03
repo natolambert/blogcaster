@@ -69,6 +69,7 @@ if __name__ == "__main__":
     parser.add_argument("--start_heading", type=str, default="", help="start at section named in generation")
     parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
     parser.add_argument("--figure_audio", type=str, default="source/repeat/see-figure.mp3", help="figure audio path")
+    parser.add_argument("--ignore_title", action="store_true", default=False, help="ignore title and date in config")
     args = parser.parse_args()
 
     TOTAL_GEN_AUDIO_FILES = 0
@@ -110,33 +111,33 @@ if __name__ == "__main__":
     # iterate over config file that contains headings, text, and figures
     for i, (heading, content) in tqdm(enumerate(config.items())):
         i = str(i).zfill(2)
-        print(f"Generating audio for section {i}, {heading}")
-        if len(args.start_heading) > 0:
-            if heading == args.start_heading or skip_found:
-                skip_found = True
-                pass
-            else:
-                continue
-
-        heading = strip_title(heading)
-
-        # skip md file path and date
         if heading in ["md", "date"]:
             continue
-        else:
+        if not args.ignore_title:
+            print(f"Generating audio for section {i}, {heading}")
+            if len(args.start_heading) > 0:
+                if heading == args.start_heading or skip_found:
+                    skip_found = True
+                    pass
+                else:
+                    continue
+
+            heading = strip_title(heading)
+
+            # skip md file path and date
             section_titles.append(heading)
 
-        if first_gen:
-            # generate audio file for Title + date
-            heading = heading + " was published on " + config["date"] + "."
-            first_gen = False
+            if first_gen:
+                # generate audio file for Title + date
+                heading = heading + " was published on " + config["date"] + "."
+                first_gen = False
 
-        payload["text"] = heading
-        # generate audio for heading
+            payload["text"] = heading
+            # generate audio for heading
 
-        fname = f"{audio_dir}/audio_{i}_0.mp3"
-        request_audio(url_nathan, payload, headers, querystring, fname)
-        TOTAL_GEN_AUDIO_FILES += 1
+            fname = f"{audio_dir}/audio_{i}_0.mp3"
+            request_audio(url_nathan, payload, headers, querystring, fname)
+            TOTAL_GEN_AUDIO_FILES += 1
 
         # iterate over list of dicts in content and
         for para in content:

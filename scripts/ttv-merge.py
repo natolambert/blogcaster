@@ -41,7 +41,7 @@ def adjust_audio_durations(audio_durations, is_image):
     return adjusted_durations
 
 
-def images_to_video(directory):
+def images_to_video(directory, skip=False):
     image_dir = os.path.join(directory, "images")
     audio_dir = os.path.join(directory, "audio")
     audio_file = os.path.join(audio_dir, "generated_audio.mp3")
@@ -71,6 +71,10 @@ def images_to_video(directory):
                 else:
                     is_image.append(False)
 
+    # for talks
+    if skip:
+        is_image = is_image[1:]
+        
     # for items where is_image is True, increase the time in audio_durations
     # by .25 of the preceeding paragraph and .5 of the following paragraph
     # reduce the time of the preceeding and following image accordingly
@@ -116,7 +120,8 @@ def images_to_video(directory):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, help="directory with images, config, and audio")
+    parser.add_argument("--ignore_title", action="store_true", default=False, help="skip titles for generative talks")
     args = parser.parse_args()
 
     # Convert images and audio to video
-    images_to_video(args.input)
+    images_to_video(args.input, skip=args.ignore_title)
