@@ -130,7 +130,7 @@ python scripts/ttv-merge.py --input=source/test-post/
 
 ----
 ## Generated research  video
-Sick of workshopping 3-5minute videos no one watches? Use this tool! An example video is [here]([url](https://youtu.be/mc-QmqMPhSA)) and included in `examples/research-talk`.
+Sick of workshopping 3-5minute videos no one watches? Use this tool! An example video is [here](https://youtu.be/mc-QmqMPhSA) and included in `examples/research-talk`.
 This section requires `imagemagick`:
 ```
 brew install imagemagick
