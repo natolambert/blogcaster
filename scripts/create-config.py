@@ -81,7 +81,7 @@ def parse_markdown_to_dict(md_content):
         elif line.startswith("#"):
             # New section
             section_index += 1
-            current_section = re.sub(r"#+\s*", "", line).strip()
+            current_section = unidecode.unidecode(re.sub(r"#+\s*", "", line).strip())
             sections[f"{str(section_index).zfill(2)}_" + current_section] = []
         elif line.strip():
             if line.strip().startswith("!["):

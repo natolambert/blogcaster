@@ -45,7 +45,7 @@ def get_image(idx, string):
             model="dall-e-3",
             prompt=prompt,
             size="1792x1024",
-            quality="standard",
+            quality="hd",
             n=1,
         )
         # print(f'Response code: {response.status_code}')
@@ -66,20 +66,19 @@ if __name__ == "__main__":
     # import argparse and define txt file path and output path
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, help="input text file dir")
+    parser.add_argument("--dwnld_only", action="store_true", default=False, help="only download images")
     args = parser.parse_args()
-
-    # read input
-    # with open(args.input, "r") as f:
-    #     data = f.read()
 
     # load yml file at args.input + config.yml
     with open(args.input + "config.yml", "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
     prompts = []
+    heading_count = 0
     first_gen = True
     # iterate over yaml file, record text per paragraph in string, don't create images for figures
     for i, (heading, content) in tqdm(enumerate(config.items())):
+        heading_count += 1
         heading = strip_title(heading)
         # skip md file path and date
         if heading in ["md", "date"]:
@@ -98,10 +97,16 @@ if __name__ == "__main__":
             # if para is dict, do nothing
             if isinstance(para["content"], dict):
                 # copy png from source to gen-images, rename with appropriate idx
-                idx = str(para["index"]).zfill(3)
+                idx = str(len(prompts)).zfill(3)
                 path = para["content"]["path"]
-                # move to args.input + gen-images as name img_{idx}.png
-                os.system(f"cp {args.input}{path} {args.input}images/img_{idx}.png")
+                # if path is url, download to img_{idx}.png with curl
+                if path.startswith("http"):
+                    # TODO debug this
+                    os.system(f"curl {path} -o {args.input}images/img_{idx}.png")
+
+                # else move to args.input + gen-images as name img_{idx}.png
+                else:
+                    os.system(f"cp {args.input}{path} {args.input}images/img_{idx}.png")
                 prompts.append(None)  # for keeping track of index
 
             # if para is str, generate audio
@@ -110,8 +115,10 @@ if __name__ == "__main__":
             else:
                 print("Config Error: para is neither dict nor str")
 
-    with Pool(processes=3) as pool:
-        pool.starmap(get_image, enumerate(prompts))
+    # if --dwnld_only, do not do this
+    if not args.dwnld_only:
+        with Pool(processes=3) as pool:
+            pool.starmap(get_image, enumerate(prompts))
 
-    # move all images from temp-images to args.input/images
-    os.system(f"mv temp-images/* {args.input}images")
+        # move all images from temp-images to args.input/images
+        os.system(f"mv temp-images/* {args.input}images")

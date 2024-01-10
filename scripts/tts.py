@@ -65,7 +65,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, required=True, help="input directory to work with")
     parser.add_argument("--output", type=str, default="generated_audio", help="output mp3 file path")
-    parser.add_argument("--elelabs_voice", type=str, default="JOTluSP6086ORVtQED4S", help="11labs voice id")
+    parser.add_argument("--elelabs_voice", type=str, default="WerIBRrBvioo2do7d1qq", help="11labs voice id")
     parser.add_argument("--start_heading", type=str, default="", help="start at section named in generation")
     parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
     parser.add_argument("--figure_audio", type=str, default="source/repeat/see-figure.mp3", help="figure audio path")
@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     TOTAL_GEN_AUDIO_FILES = 0
 
-    CHUNK_SIZE = 1024  # size of chunks to write to file / download
+    CHUNK_SIZE = 512  # size of chunks to write to file / download
     url_nathan = f"https://api.elevenlabs.io/v1/text-to-speech/{args.elelabs_voice}"
     # url_newsread = "https://api.elevenlabs.io/v1/text-to-speech/frqJk20JrduLkgUgHtMR"
 
@@ -96,7 +96,8 @@ if __name__ == "__main__":
     # audio_config for 11labs, can change these
     payload = {
         "model_id": "eleven_multilingual_v2",
-        "voice_settings": {"similarity_boost": 0.75, "stability": 0.50, "style": 0.05, "use_speaker_boost": True},
+        # "voice_settings": {"similarity_boost": 0.75, "stability": 0.50, "style": 0.05, "use_speaker_boost": True}, # orig settings
+        "voice_settings": {"similarity_boost": 0.80, "stability": 0.45, "style": 0.05, "use_speaker_boost": True}, # voice v2 settings
     }
 
     # create dir audio at args.input + audio
@@ -109,14 +110,16 @@ if __name__ == "__main__":
     section_titles = []
     see_figures_idx = []
     # iterate over config file that contains headings, text, and figures
-    for i, (heading, content) in tqdm(enumerate(config.items())):
-        i = str(i).zfill(2)
+    for idx, (heading, content) in tqdm(enumerate(config.items())):
+        i = str(idx).zfill(2)
         if heading in ["md", "date"]:
             continue
         if not args.ignore_title:
             print(f"Generating audio for section {i}, {heading}")
             if len(args.start_heading) > 0:
                 if heading == args.start_heading or skip_found:
+                    if idx > 0:
+                        first_gen = False
                     skip_found = True
                     pass
                 else:
@@ -226,9 +229,10 @@ if __name__ == "__main__":
         files_list_of_lists.append(files)
     section_lens = [get_cumulative_length(list_l) for list_l in files_list_of_lists]
     total_len = sum(section_lens)
+
     print(f"Cumulative length of all audio files: {section_lens} seconds")
     print("----------------------------------")
-    print("Printing podcast chapter versions (does not include `see figure` audio):")
+    print("Printing youtube chapter versions (does not include `see figure` audio):")
     print("----------------------------------")
 
     print(section_titles[0])
@@ -243,7 +247,7 @@ if __name__ == "__main__":
         cur_len += section_len
 
     print("----------------------------------")
-    print("Printing youtube chapter versions:")
+    print("Printing podcast chapter versions:")
     print("----------------------------------")
     files_list_of_lists = []
     for s in sections:

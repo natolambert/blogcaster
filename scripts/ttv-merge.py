@@ -80,12 +80,12 @@ def images_to_video(directory, skip=False):
     # reduce the time of the preceeding and following image accordingly
     # if image is at the beginning or end, only increase the following or preceeding paragraph
     new_audio_durations = adjust_audio_durations(audio_durations, is_image)
-
+    
     # Get all image files in the directory
     image_files = [f for f in os.listdir(image_dir) if f.endswith((".jpg", ".jpeg", ".png", ".webp"))]
     image_files = sorted(image_files)
 
-    assert len(image_files) == len(new_audio_durations), "Number of images and audio files must be the same"
+    assert len(image_files) == len(new_audio_durations), f"Number of images {len(image_files) }and audio files {len(new_audio_durations)} must be the same"
 
     # Load the first image to get dimensions
     first_image = cv2.imread(os.path.join(image_dir, image_files[0]))
@@ -97,6 +97,41 @@ def images_to_video(directory, skip=False):
     # check coloring with cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
     all_images = [cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) for frame in all_images]
 
+    # get dimensions of all the images
+    heights = [frame.shape[0] for frame in all_images]
+    widths = [frame.shape[1] for frame in all_images]
+    # take most common height and width pairing
+    desired_height = max(set(heights), key=heights.count)
+    desired_width = max(set(widths), key=widths.count)
+    # if images are taller or wider than the most common (DALLE images), shrink to conflicting dimension
+    # Resize images if they are larger than the most common dimensions
+    resized_images = []
+    for frame in all_images:
+        (original_height, original_width) = frame.shape[:2]
+        ratio_width = desired_width / float(original_width)
+        ratio_height = desired_height / float(original_height)
+        ratio = min(ratio_width, ratio_height)
+
+        # Compute new dimensions
+        new_width = int(original_width * ratio)
+        new_height = int(original_height * ratio)
+
+        # Resize the frame
+        resized_frame = cv2.resize(frame, (new_width, new_height))
+
+        # If you need to pad the image to maintain the desired dimensions
+        delta_width = desired_width - new_width
+        delta_height = desired_height - new_height
+        top, bottom = delta_height // 2, delta_height - (delta_height // 2)
+        left, right = delta_width // 2, delta_width - (delta_width // 2)
+        color = [0, 0, 0]  # Color for padding, black in this case
+        resized_frame = cv2.copyMakeBorder(resized_frame, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)
+
+        resized_images.append(resized_frame)
+
+    # Now, resized_images contains all your frames with uniform dimensions
+    all_images = resized_images
+    
     # load audio
     audio_clip = AudioFileClip(audio_file)
     # audio_duration = audio_clip.duration
