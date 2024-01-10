@@ -159,6 +159,10 @@ Here's an example for 10%:
 ffmpeg -i examples/research-talk/video.mp4 -filter_complex "[0:v]setpts=PTS/1.1[v];[0:a]atempo=1.1[a]" -map "[v]" -map "[a]" output.mp4
 ```
 
+## Tips
+
+* Use shorter sequeneces, 11labs tends to have volume drift on longer segments.
+
 ## TODO list
 Keeping note of features I want to add in a lazy manner:
 * Adding list of figures to podcast shownotes + link because inserting them is hard.
