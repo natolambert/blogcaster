@@ -43,6 +43,12 @@ Similarly, for 11labs:
 ```
 export ELELABS_API_KEY='your-api-key-here'
 ```
+And finally for HuggingFace (optional figure storage for podcast show notes):
+```
+export HF_API_KEY='your-api-key-here'
+```
+I've begain using [this directory](https://huggingface.co/datasets/natolambert/interconnects-figures) for these images.
+
 Additionally, the audio/visual tools I used require `ffmpeg`.
 **Blogs using these tools**:
 (open an issue to be featured!)

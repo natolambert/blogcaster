@@ -19,6 +19,7 @@ flake8==6.1.0
 h11==0.14.0
 httpcore==1.0.2
 httpx==0.25.2
+huggingface_hub==0.20.2
 idna==3.6
 imageio==2.33.0
 imageio-ffmpeg==0.4.9

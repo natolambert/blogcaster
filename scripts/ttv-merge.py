@@ -156,7 +156,7 @@ def images_to_video(directory, skip=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, help="directory with images, config, and audio")
+    parser.add_argument("--input", type=str, required=True, help="directory with images, config, and audio")
     parser.add_argument("--ignore_title", action="store_true", default=False, help="skip titles for generative talks")
     args = parser.parse_args()
 

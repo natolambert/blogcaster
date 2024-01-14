@@ -7,6 +7,7 @@ from multiprocessing import Pool
 
 import requests
 import yaml
+from huggingface_hub import HfApi
 from openai import OpenAI
 from tqdm import tqdm
 
@@ -64,13 +65,19 @@ def get_image(idx, string):
 if __name__ == "__main__":
     # import argparse and define txt file path and output path
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, help="input text file dir")
-    parser.add_argument("--dwnld_only", action="store_true", default=False, help="only download images")
+    parser.add_argument("--input", type=str, required=True, help="input text file dir")
+    parser.add_argument("--do_not_gen", action="store_true", default=False, help="only download images")
+    parser.add_argument("--hf_fig_dir", type=str, default=None, help="directory with images for figures")
     args = parser.parse_args()
+    hf_dataset = args.hf_fig_dir
 
     # load yml file at args.input + config.yml
     with open(args.input + "config.yml", "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
+
+    # if images subdir doesn't exist, created it
+    if not os.path.exists(args.input + "images"):
+        os.makedirs(args.input + "images")
 
     prompts = []
     heading_count = 0
@@ -98,14 +105,18 @@ if __name__ == "__main__":
                 # copy png from source to gen-images, rename with appropriate idx
                 idx = str(len(prompts)).zfill(3)
                 path = para["content"]["path"]
+                img_type = path.split(".")[-1]  # one of png, jpg, jpeg, webp
+
                 # if path is url, download to img_{idx}.png with curl
                 if path.startswith("http"):
-                    # TODO debug this
-                    os.system(f"curl {path} -o {args.input}images/img_{idx}.png")
+                    # TODO debug this again
+                    # download image with correct type
+                    # os.system(f"curl {path} -o {args.input}images/img_{idx}.png")
+                    os.system(f"curl {path} -o {args.input}images/img_{idx}.{img_type}")
 
                 # else move to args.input + gen-images as name img_{idx}.png
                 else:
-                    os.system(f"cp {args.input}{path} {args.input}images/img_{idx}.png")
+                    os.system(f"cp {args.input}{path} {args.input}images/img_{idx}.{img_type}")
                 prompts.append(None)  # for keeping track of index
 
             # if para is str, generate audio
@@ -114,8 +125,33 @@ if __name__ == "__main__":
             else:
                 print("Config Error: para is neither dict nor str")
 
-    # if --dwnld_only, do not do this
-    if not args.dwnld_only:
+    # before starting generation, upload the local images (those already) to the
+    if hf_dataset:
+        # get hf token from HF_TOKEN
+        HF_TOKEN = os.environ["HF_TOKEN"]
+        api = HfApi(token=HF_TOKEN)
+
+        # path is input + images/
+        # repo_path is just the post name (what follows source in input path, after / )
+        # repo_id is hf_dataset
+        path = args.input + "images/"
+        repo_path = args.input.split("/")[-2]
+        api.upload_folder(
+            folder_path=path,
+            path_in_repo=repo_path,
+            repo_id=hf_dataset,
+            repo_type="dataset",
+        )
+
+        # iterate through figures in images, and print "Figure {N}: {clickable link on hf}"
+        # example link
+        # https://huggingface.co/datasets/natolambert/interconnects-figures/resolve/main/test-post/img_003.png
+        print("Podcast figures:")
+        for i, fig in enumerate(os.listdir(path)):
+            print(f"Figure {i}: https://huggingface.co/datasets/{hf_dataset}/resolve/main/{repo_path}/{fig}")
+
+    # if --do_not_gen, do not do this
+    if not args.do_not_gen:
         with Pool(processes=3) as pool:
             pool.starmap(get_image, enumerate(prompts))
 
