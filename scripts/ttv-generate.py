@@ -28,7 +28,6 @@ def strip_title(string):
         return string
 
 
-
 def get_image(idx, string):
     # when figures exist, do not generate (string is None)
     if string is None:

@@ -74,18 +74,20 @@ def images_to_video(directory, skip=False):
     # for talks
     if skip:
         is_image = is_image[1:]
-        
+
     # for items where is_image is True, increase the time in audio_durations
     # by .25 of the preceeding paragraph and .5 of the following paragraph
     # reduce the time of the preceeding and following image accordingly
     # if image is at the beginning or end, only increase the following or preceeding paragraph
     new_audio_durations = adjust_audio_durations(audio_durations, is_image)
-    
+
     # Get all image files in the directory
     image_files = [f for f in os.listdir(image_dir) if f.endswith((".jpg", ".jpeg", ".png", ".webp"))]
     image_files = sorted(image_files)
 
-    assert len(image_files) == len(new_audio_durations), f"Number of images {len(image_files) }and audio files {len(new_audio_durations)} must be the same"
+    assert len(image_files) == len(
+        new_audio_durations
+    ), f"Number of images {len(image_files) }and audio files {len(new_audio_durations)} must be the same"
 
     # Load the first image to get dimensions
     first_image = cv2.imread(os.path.join(image_dir, image_files[0]))
@@ -131,7 +133,7 @@ def images_to_video(directory, skip=False):
 
     # Now, resized_images contains all your frames with uniform dimensions
     all_images = resized_images
-    
+
     # load audio
     audio_clip = AudioFileClip(audio_file)
     # audio_duration = audio_clip.duration
