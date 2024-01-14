@@ -25,6 +25,7 @@ Install from `requirements.txt`
 ```
 conda create -n media python=3.10
 conda activate media
+pip install -r requirements.txt
 ```
 
 Right now this is not on pypi, run as following:
