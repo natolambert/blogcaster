@@ -148,7 +148,7 @@ if __name__ == "__main__":
         # https://huggingface.co/datasets/natolambert/interconnects-figures/resolve/main/test-post/img_003.png
         print("Podcast figures:")
         for i, fig in enumerate(os.listdir(path)):
-            print(f"Figure {i}: https://huggingface.co/datasets/{hf_dataset}/resolve/main/{repo_path}/{fig}")
+            print(f"Figure {i+1}: https://huggingface.co/datasets/{hf_dataset}/resolve/main/{repo_path}/{fig}")
 
     # if --do_not_gen, do not do this
     if not args.do_not_gen:

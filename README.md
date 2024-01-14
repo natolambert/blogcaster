@@ -129,6 +129,12 @@ python experimental/add-music.py --input=audio/20231129-synthetic.mp3
 ```
 python scripts/ttv-generate.py --input=source/test-post/
 ```
+Optionally, one can provide a HuggingFace dataset where the images will be uploaded, so the podcast show notes can have clickable links, e.g. (--do_not_gen is for not burning extra GPUs):
+```
+python scripts/ttv-generate.py --input=examples/test-post/ --do_not_gen --hf_fig_dir=natolambert/interconnects-figures
+Podcast figures:
+Figure 1: https://huggingface.co/datasets/natolambert/interconnects-figures/resolve/main/test-post/img_003.png
+```
 
 ### Video
 ```
