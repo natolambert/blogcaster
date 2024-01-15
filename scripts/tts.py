@@ -68,7 +68,6 @@ if __name__ == "__main__":
     parser.add_argument("--elelabs_voice", type=str, default="WerIBRrBvioo2do7d1qq", help="11labs voice id")
     parser.add_argument("--start_heading", type=str, default="", help="start at section named in generation")
     parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
-    parser.add_argument("--figure_audio", type=str, default="source/repeat/see-figure.mp3", help="figure audio path")
     parser.add_argument("--ignore_title", action="store_true", default=False, help="ignore title and date in config")
     args = parser.parse_args()
 
@@ -82,7 +81,7 @@ if __name__ == "__main__":
     headers = {
         "Accept": "audio/mpeg",
         "Content-Type": "application/json",
-        "xi-api-key": API_KEY,  # "c23b31aabf009cb93c8feb5f4ddedc85",
+        "xi-api-key": API_KEY,  # "c23b31aabf009cb93c8feb5f4ddedc85", this isn't a valid API key
     }
 
     # Uncomment for higher bitrate (larger files)
@@ -116,7 +115,7 @@ if __name__ == "__main__":
     first_gen = True
     skip_found = False
     section_titles = []
-    see_figures_idx = []
+    fig_count = 1
     # iterate over config file that contains headings, text, and figures
     for idx, (heading, content) in tqdm(enumerate(config.items())):
         i = str(idx).zfill(2)
@@ -158,13 +157,23 @@ if __name__ == "__main__":
 
             # if para is dict, prepare special audio to indicate figure
             if isinstance(para["content"], dict):
-                # [OPTIONAL]  copy file source/repeat/see-figure.mp3 as audio_{idx}.mp3
-                # only copy if it exists, otherwise it ignores the figures
-                if os.path.exists(args.figure_audio):
-                    os.system(f"cp {args.figure_audio} {audio_dir}/audio_{i}_{idx}.mp3")
-                    see_figures_idx.append(TOTAL_GEN_AUDIO_FILES)
-                    TOTAL_GEN_AUDIO_FILES += 1
-                pass
+                fig_count_str = str(fig_count).zfill(2)
+                # check if file source/repeat/figure_{fig_count_str}.mp3 exists, 
+                # if so copy it to audio_dir with naming scheme
+                if os.path.exists(f"source/repeat/figure_{fig_count_str}.mp3"):
+                    os.system(f"cp source/repeat/figure_{fig_count_str}.mp3 {audio_dir}/audio_{i}_{idx}.mp3")
+
+                # else generate the audio with index
+                else:
+                    payload["text"] = f"See figure {fig_count}"
+                    fname = f"source/repeat/figure_{fig_count_str}.mp3"
+                    request_audio(url_nathan, payload, headers, querystring, fname)
+                    # copy fname to audio dir f"{audio_dir}/audio_{i}_{idx}.mp3"
+                    os.system(f"cp {fname} {audio_dir}/audio_{i}_{idx}.mp3")
+
+                TOTAL_GEN_AUDIO_FILES += 1
+                fig_count += 1
+
             # if para is str, generate audio
             elif isinstance(para["content"], str):
                 payload["text"] = para["content"]
@@ -189,29 +198,14 @@ if __name__ == "__main__":
     # output_files = [f"{audio_dir}/audio_{i}.mp3" for i in range(0, TOTAL_GEN_AUDIO_FILES)]
     print(f"Sorted audio files {audio_files}")
 
-    # for podcast version remove "see figures" from see_figures_idx of files above
-    podcast_files = [f for i, f in enumerate(audio_files) if i not in see_figures_idx]
-
     # [OPTIONAL] add source/repeat/farewell.mp3 to end of list (here to not mess with later code)
     # only do this if the farewell audio exists
     if os.path.exists(args.farewell_audio):
         audio_files.append(args.farewell_audio)
-        podcast_files.append(args.farewell_audio)
 
     subprocess.run(
         ["ffmpeg", "-i", "concat:" + "|".join(audio_files), "-c", "copy", audio_dir + "/" + args.output + ".mp3"]
     )
-    subprocess.run(
-        [
-            "ffmpeg",
-            "-i",
-            "concat:" + "|".join(podcast_files),
-            "-c",
-            "copy",
-            audio_dir + "/" + args.output + "_podcast" + ".mp3",
-        ]
-    )
-    podcast_files = podcast_files[:-1]
 
     # TODO remove all acronyms and other filtering, some that are bad are SOTA and MoE
     # TODO add seperate voice for quotes / quote detection
@@ -240,7 +234,7 @@ if __name__ == "__main__":
 
     print(f"Cumulative length of all audio files: {section_lens} seconds")
     print("----------------------------------")
-    print("Printing youtube chapter versions (does not include `see figure` audio):")
+    print("Printing chapter times:")
     print("----------------------------------")
 
     print(section_titles[0])
@@ -249,23 +243,6 @@ if __name__ == "__main__":
     print("Source code: https://github.com/natolambert/interconnects-tools")
     print("Original post: TODO")
     print()
-    cur_len = 0
-    for section_title, section_len in zip(section_titles, section_lens):
-        print(f"{print_if_hour(floor(cur_len), total_len)} {section_title}")
-        cur_len += section_len
-
-    print("----------------------------------")
-    print("Printing podcast chapter versions:")
-    print("----------------------------------")
-    files_list_of_lists = []
-    for s in sections:
-        files = [f for f in podcast_files if f.split("_")[1] == s]
-        files_list_of_lists.append(files)
-    section_lens = [get_cumulative_length(list_l) for list_l in files_list_of_lists]
-    total_len = sum(section_lens)
-
-    # print first item of the first value content in config, which is the substitle
-
     cur_len = 0
     for section_title, section_len in zip(section_titles, section_lens):
         print(f"{print_if_hour(floor(cur_len), total_len)} {section_title}")

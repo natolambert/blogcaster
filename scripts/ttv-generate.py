@@ -150,6 +150,10 @@ if __name__ == "__main__":
         for i, fig in enumerate(os.listdir(path)):
             print(f"Figure {i+1}: https://huggingface.co/datasets/{hf_dataset}/resolve/main/{repo_path}/{fig}")
 
+    # if temp-images dir doesn't exist, make it
+    if not os.path.exists("temp-images"):
+        os.makedirs("temp-images")
+
     # if --do_not_gen, do not do this
     if not args.do_not_gen:
         with Pool(processes=3) as pool:

@@ -175,6 +175,7 @@ ffmpeg -i examples/research-talk/video.mp4 -filter_complex "[0:v]setpts=PTS/1.1[
 ## Tips
 
 * Use shorter sequeneces, 11labs tends to have volume drift on longer segments.
+* Weird file paths can cause bugs still (such as () at the end of an image file).
 
 ## TODO list
 Keeping note of features I want to add in a lazy manner:

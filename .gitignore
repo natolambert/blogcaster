@@ -1,6 +1,8 @@
 .DS_Store
 *.m4a
+*.mp4
 images/
 audio/
 source/
 junk/
+temp-images/
