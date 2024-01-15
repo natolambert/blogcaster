@@ -147,9 +147,13 @@ if __name__ == "__main__":
         # example link
         # https://huggingface.co/datasets/natolambert/interconnects-figures/resolve/main/test-post/img_003.png
         print("Podcast figures:")
-        for i, fig in enumerate(os.listdir(path)):
-            print(f"Figure {i+1}: https://huggingface.co/datasets/{hf_dataset}/resolve/main/{repo_path}/{fig}")
-
+        figures = 0
+        for i, fig in enumerate(sorted(os.listdir(path))):
+            # only print if corresponding index in prompts is None
+            if prompts[i] is None:
+                print(f"Figure {figures+1}: https://huggingface.co/datasets/{hf_dataset}/resolve/main/{repo_path}/{fig}")
+                figures += 1
+                
     # if temp-images dir doesn't exist, make it
     if not os.path.exists("temp-images"):
         os.makedirs("temp-images")
