@@ -21,18 +21,18 @@ Second, you cannot use my generated voice per 11labs terms and how it is created
 My API key in the git history is no longer valid, of course.
 
 ## Installation
+Right now this is not on pypi, run as following:
+```
+git clone https://github.com/natolambert/interconnects-tools
+cd interconnects-tools
+```
 Install from `requirements.txt`
 ```
 conda create -n media python=3.10
 conda activate media
 pip install -r requirements.txt
 ```
-
-Right now this is not on pypi, run as following:
-```
-git clone https://github.com/natolambert/interconnects-tools
-cd interconnects-tools
-```
+Next, you need to make sure you have subsequent accounts & API keys.
 
 ### API Keys
 To set the OpenAI API key, add the following ([from the docs](https://platform.openai.com/docs/quickstart?context=python)) to your `bashrc`:
@@ -50,6 +50,7 @@ export HF_API_KEY='your-api-key-here'
 I've begain using [this directory](https://huggingface.co/datasets/natolambert/interconnects-figures) for these images.
 
 Additionally, the audio/visual tools I used require `ffmpeg`.
+
 **Blogs using these tools**:
 (open an issue to be featured!)
 
@@ -78,11 +79,13 @@ source/
 ### Config
 Generate the config file (that contains the paragraphs etc)
 ```
-python scripts/create-config.py source/test-post/ --date="24 December 2023"
+python scripts/create-config.py source/test-post/ --date="December 24th 2023"
 ```
 The image paths can be wrong if you change them on your local machine post export, double check!
 
 *Note: it is recommended to skim the config and combine things like lists, otherwise generation is split into many more parts and needlessly across images at times.*
+
+I recommend double checking file-paths for images in the config. They can be quite annoying, especially exporting from Notion.
 
 ### Audio 
 Base usage is as follows.
@@ -181,3 +184,5 @@ ffmpeg -i examples/research-talk/video.mp4 -filter_complex "[0:v]setpts=PTS/1.1[
 Keeping note of features I want to add in a lazy manner:
 * Adding list of figures to podcast shownotes + link because inserting them is hard.
 * Verify that the try-except block in `tts.py` works as intended.
+* Acronym management (so the audio is not weird).
+* Additional voice for quote blocks.
