@@ -34,7 +34,10 @@ pip install -r requirements.txt
 ```
 Next, you need to make sure you have subsequent accounts & API keys.
 
-### API Keys
+### API Keys & Models
+This requires an Eleven Labs account with a model id from your voice lab. 
+This takes a few minutes to set up and is fine-tuned from 1-3minutes of recordings of yourself; very easy.
+
 To set the OpenAI API key, add the following ([from the docs](https://platform.openai.com/docs/quickstart?context=python)) to your `bashrc`:
 ```
 export OPENAI_API_KEY='your-api-key-here'
