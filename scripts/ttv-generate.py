@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 SYSTEM_PROMPT = (
     "The following instructions are text taken from a blog post on AI and ML,"
-    "please create pretty images to accompany an audio version of this post: \n\n"
+    "please create diverse in style, elegant, and awesome images to accompany an audio version of this post: \n\n"
 )
 client = OpenAI()
 
@@ -151,9 +151,11 @@ if __name__ == "__main__":
         for i, fig in enumerate(sorted(os.listdir(path))):
             # only print if corresponding index in prompts is None
             if prompts[i] is None:
-                print(f"Figure {figures+1}: https://huggingface.co/datasets/{hf_dataset}/resolve/main/{repo_path}/{fig}")
+                print(
+                    f"Figure {figures+1}: https://huggingface.co/datasets/{hf_dataset}/resolve/main/{repo_path}/{fig}"
+                )
                 figures += 1
-                
+
     # if temp-images dir doesn't exist, make it
     if not os.path.exists("temp-images"):
         os.makedirs("temp-images")

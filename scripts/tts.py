@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import re
 import subprocess
 from datetime import timedelta
 from math import floor
@@ -42,18 +43,32 @@ def request_audio(url, payload, headers, querystring, filename):
             if chunk:
                 part_file.write(chunk)
     """
-    # remove \n and > from payload text
+    # remove \n and > from payload text, and others
     payload["text"] = payload["text"].replace("\n", " ")
     payload["text"] = payload["text"].replace(">", "")
+    payload["text"] = payload["text"].replace("**", "")
+    # acronyms
+    payload["text"] = payload["text"].replace("e.g.", "e g")
+    payload["text"] = payload["text"].replace("i.e.", "i e")
+    payload["text"] = payload["text"].replace("w.r.t.", "with respect to")
+    # move quotes inside periods for better processing
+    payload["text"] = payload["text"].replace('."', '".')
 
     if not os.path.exists(filename):
-        print("-> audio request send to 11labs")
         try:
-            response = requests.post(url, json=payload, headers=headers, params=querystring)
+            # iterate over sentence in text, and create file
+            full_text = payload["text"]
             with open(filename, "wb") as part_file:
-                for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                    if chunk:
-                        part_file.write(chunk)
+                for sentence in re.split("[?.!]", full_text):
+                    if len(sentence) > 0 and sentence not in [" ", ".", "!", "?"]:  # skip empty sentences
+                        if sentence[0] == " ":  # remove leading space
+                            sentence = sentence[1:]
+                        payload["text"] = sentence + "."  # add period back
+                        print("-> audio request send to 11labs")
+                        response = requests.post(url, json=payload, headers=headers, params=querystring)
+                        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                            if chunk:
+                                part_file.write(chunk)
         except Exception as e:
             print(f"Error: {e}")
     else:
@@ -158,7 +173,7 @@ if __name__ == "__main__":
             # if para is dict, prepare special audio to indicate figure
             if isinstance(para["content"], dict):
                 fig_count_str = str(fig_count).zfill(2)
-                # check if file source/repeat/figure_{fig_count_str}.mp3 exists, 
+                # check if file source/repeat/figure_{fig_count_str}.mp3 exists,
                 # if so copy it to audio_dir with naming scheme
                 if os.path.exists(f"source/repeat/figure_{fig_count_str}.mp3"):
                     os.system(f"cp source/repeat/figure_{fig_count_str}.mp3 {audio_dir}/audio_{i}_{idx}.mp3")
