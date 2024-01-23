@@ -66,7 +66,7 @@ def images_to_video(directory, skip=False):
         else:
             is_image.append(False)
             for item in value:
-                if "path" in item.get("content", {}):
+                if "alt_text" in item.get("content", {}):
                     is_image.append(True)
                 else:
                     is_image.append(False)

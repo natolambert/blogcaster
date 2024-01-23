@@ -34,7 +34,7 @@ def get_cumulative_length(file_list):
     return cumulative_length / 1000.0  # Convert to seconds
 
 
-def request_audio(url, payload, headers, querystring, filename):
+def request_audio(url, payload, headers, querystring, filename, normalize=True):
     """
     A function to replace the following code:
     response = requests.post(url_nathan, json=payload, headers=headers, params=querystring)
@@ -53,6 +53,12 @@ def request_audio(url, payload, headers, querystring, filename):
     payload["text"] = payload["text"].replace("w.r.t.", "with respect to")
     # move quotes inside periods for better processing
     payload["text"] = payload["text"].replace('."', '".')
+    # model names
+    payload["text"] = payload["text"].replace("3.5", "3 point 5")
+    payload["text"] = payload["text"].replace("4.5", "4 point 5")
+    payload["text"] = payload["text"].replace("LLaVA", "llava")
+    # some errors with dashes
+    payload["text"] = payload["text"].replace("do-or-die", "do or die")
 
     if not os.path.exists(filename):
         try:
@@ -71,8 +77,16 @@ def request_audio(url, payload, headers, querystring, filename):
                                 part_file.write(chunk)
         except Exception as e:
             print(f"Error: {e}")
+
+        # normalize audio file
+        if normalize:
+            print(f"-> normalizing audio file {filename}")
+            # default bitrate 128K and sample rate 44100 for 11labs
+            subprocess.run(["ffmpeg-normalize", filename, "-o", filename, "-f", "-c:a", "libmp3lame", "-b:a", "128K", "-ar", "44100"])
+
     else:
         print(f"-> audio file {filename} already exists, skipping request")
+    
 
 
 if __name__ == "__main__":
@@ -115,7 +129,7 @@ if __name__ == "__main__":
         # "style": 0.05,
         # "use_speaker_boost": True}, # orig settings
         "voice_settings": {
-            "similarity_boost": 0.80,
+            "similarity_boost": 0.75,
             "stability": 0.45,
             "style": 0.05,
             "use_speaker_boost": True,
