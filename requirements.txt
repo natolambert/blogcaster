@@ -38,7 +38,7 @@ packaging==23.2
 parso==0.8.3
 pathspec==0.12.1
 pexpect==4.9.0
-pillow==10.1.0
+pillow==10.2.0
 platformdirs==4.1.0
 proglog==0.1.10
 prompt-toolkit==3.0.41
