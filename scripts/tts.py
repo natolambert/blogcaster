@@ -34,7 +34,7 @@ def get_cumulative_length(file_list):
     return cumulative_length / 1000.0  # Convert to seconds
 
 
-def request_audio(url, payload, headers, querystring, filename, normalize=True):
+def request_audio(url, payload, headers, querystring, filename, normalize=True, per_sentence=False):
     """
     A function to replace the following code:
     response = requests.post(url_nathan, json=payload, headers=headers, params=querystring)
@@ -60,21 +60,47 @@ def request_audio(url, payload, headers, querystring, filename, normalize=True):
     # some errors with dashes
     payload["text"] = payload["text"].replace("do-or-die", "do or die")
 
+    # replace month abbreviations mar -> march etc
+    payload["text"] = payload["text"].replace("Jan.", "January")
+    payload["text"] = payload["text"].replace("Feb.", "February")
+    payload["text"] = payload["text"].replace("Mar.", "March")
+    payload["text"] = payload["text"].replace("Apr.", "April")
+    payload["text"] = payload["text"].replace("Jun.", "June")
+    payload["text"] = payload["text"].replace("Jul.", "July")
+    payload["text"] = payload["text"].replace("Aug.", "August")
+    payload["text"] = payload["text"].replace("Sep.", "September")
+    payload["text"] = payload["text"].replace("Sept.", "September")
+    payload["text"] = payload["text"].replace("Oct.", "October")
+    payload["text"] = payload["text"].replace("Nov.", "November")
+    payload["text"] = payload["text"].replace("Dec.", "December")
+
+    payload["text"] = payload["text"].replace("Anon. ", "Anonymous ")
+
     if not os.path.exists(filename):
         try:
-            # iterate over sentence in text, and create file
             full_text = payload["text"]
-            with open(filename, "wb") as part_file:
-                for sentence in re.split("[?.!]", full_text):
-                    if len(sentence) > 0 and sentence not in [" ", ".", "!", "?"]:  # skip empty sentences
-                        if sentence[0] == " ":  # remove leading space
-                            sentence = sentence[1:]
-                        payload["text"] = sentence + "."  # add period back
-                        print("-> audio request send to 11labs")
-                        response = requests.post(url, json=payload, headers=headers, params=querystring)
-                        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                            if chunk:
-                                part_file.write(chunk)
+            # iterate over sentence in text, and create file
+            if per_sentence:
+                with open(filename, "wb") as part_file:
+                    for sentence in re.split("[?.!]", full_text):
+                        if len(sentence) > 0 and sentence not in [" ", ".", "!", "?"]:  # skip empty sentences
+                            if sentence[0] == " ":  # remove leading space
+                                sentence = sentence[1:]
+                            payload["text"] = sentence + "."  # add period back
+                            print("-> audio request send to 11labs")
+                            response = requests.post(url, json=payload, headers=headers, params=querystring)
+                            for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                                if chunk:
+                                    part_file.write(chunk)
+            else:
+                print("-> audio request send to 11labs")
+                payload["text"] = full_text
+                response = requests.post(url, json=payload, headers=headers, params=querystring)
+                with open(filename, "wb") as part_file:
+                    for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                        if chunk:
+                            part_file.write(chunk)
+
         except Exception as e:
             print(f"Error: {e}")
 
@@ -82,11 +108,24 @@ def request_audio(url, payload, headers, querystring, filename, normalize=True):
         if normalize:
             print(f"-> normalizing audio file {filename}")
             # default bitrate 128K and sample rate 44100 for 11labs
-            subprocess.run(["ffmpeg-normalize", filename, "-o", filename, "-f", "-c:a", "libmp3lame", "-b:a", "128K", "-ar", "44100"])
+            subprocess.run(
+                [
+                    "ffmpeg-normalize",
+                    filename,
+                    "-o",
+                    filename,
+                    "-f",
+                    "-c:a",
+                    "libmp3lame",
+                    "-b:a",
+                    "128K",
+                    "-ar",
+                    "44100",
+                ]
+            )
 
     else:
         print(f"-> audio file {filename} already exists, skipping request")
-    
 
 
 if __name__ == "__main__":
@@ -98,7 +137,9 @@ if __name__ == "__main__":
     parser.add_argument("--start_heading", type=str, default="", help="start at section named in generation")
     parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
     parser.add_argument("--ignore_title", action="store_true", default=False, help="ignore title and date in config")
+    parser.add_argument("--per_sentence", action="store_true", default=False, help="generate audio per sentence")
     args = parser.parse_args()
+    per_sentence = args.per_sentence
 
     TOTAL_GEN_AUDIO_FILES = 0
 
@@ -123,17 +164,20 @@ if __name__ == "__main__":
 
     # audio_config for 11labs, can change these
     payload = {
-        "model_id": "eleven_multilingual_v2",
-        # "voice_settings": {"similarity_boost": 0.75,
-        # "stability": 0.50,
-        # "style": 0.05,
-        # "use_speaker_boost": True}, # orig settings
+        # for quick fine-tunes
+        # "model_id": "eleven_multilingual_v2",
+        # "voice_settings": {
+        #     "similarity_boost": 0.75,
+        #     "stability": 0.45,
+        #     "style": 0.05,
+        #     "use_speaker_boost": True,
+        # },
+        # for PVC
+        "model_id": "eleven_turbo_v2",
         "voice_settings": {
-            "similarity_boost": 0.75,
-            "stability": 0.45,
-            "style": 0.05,
-            "use_speaker_boost": True,
-        },  # voice v2 settings
+            "similarity_boost": 0.52,
+            "stability": 0.48,
+        },
     }
 
     # create dir audio at args.input + audio
@@ -175,7 +219,7 @@ if __name__ == "__main__":
             # generate audio for heading
 
             fname = f"{audio_dir}/audio_{i}_0.mp3"
-            request_audio(url_nathan, payload, headers, querystring, fname)
+            request_audio(url_nathan, payload, headers, querystring, fname, per_sentence)
             TOTAL_GEN_AUDIO_FILES += 1
 
         # iterate over list of dicts in content and
@@ -196,7 +240,7 @@ if __name__ == "__main__":
                 else:
                     payload["text"] = f"See figure {fig_count}"
                     fname = f"source/repeat/figure_{fig_count_str}.mp3"
-                    request_audio(url_nathan, payload, headers, querystring, fname)
+                    request_audio(url_nathan, payload, headers, querystring, fname, per_sentence)
                     # copy fname to audio dir f"{audio_dir}/audio_{i}_{idx}.mp3"
                     os.system(f"cp {fname} {audio_dir}/audio_{i}_{idx}.mp3")
 
@@ -207,7 +251,7 @@ if __name__ == "__main__":
             elif isinstance(para["content"], str):
                 payload["text"] = para["content"]
                 fname = f"{audio_dir}/audio_{i}_{idx}.mp3"
-                request_audio(url_nathan, payload, headers, querystring, fname)
+                request_audio(url_nathan, payload, headers, querystring, fname, per_sentence)
                 TOTAL_GEN_AUDIO_FILES += 1
             else:
                 print("Config Error: para is neither dict nor str")

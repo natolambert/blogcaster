@@ -59,7 +59,7 @@ def get_image(idx, string):
     except Exception as e:
         print(f"Error: {e}")
 
-    time.sleep(23)  # 20sec was rate limit erroring
+    time.sleep(25)  # 20/23 sec was rate limit erroring
 
 
 if __name__ == "__main__":
@@ -105,7 +105,11 @@ if __name__ == "__main__":
                 # copy png from source to gen-images, rename with appropriate idx
                 idx = str(len(prompts)).zfill(3)
                 path = para["content"]["path"]
-                img_type = path.split(".")[-1]  # one of png, jpg, jpeg, webp
+                # if path ends with png, jpeg, jpg, or webp, split on . and take last
+                if path.endswith((".png", ".jpeg", ".jpg", ".webp")):
+                    img_type = path.split(".")[-1]  # one of png, jpg, jpeg, webp
+                else:
+                    img_type = "png"
 
                 # if path is url, download to img_{idx}.png with curl
                 if path.startswith("http"):
@@ -150,7 +154,9 @@ if __name__ == "__main__":
         figures = 0
         for i, fig in enumerate(sorted(os.listdir(path))):
             # only print if corresponding index in prompts is None
-            if prompts[i] is None:
+            # strip number from last three digists img_NNN.png -> NNN
+            fig_idx = int(fig.split("_")[-1].split(".")[0])
+            if prompts[fig_idx] is None:
                 print(
                     f"Figure {figures+1}: https://huggingface.co/datasets/{hf_dataset}/resolve/main/{repo_path}/{fig}"
                 )
