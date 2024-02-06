@@ -25,12 +25,15 @@ def strip_title(string):
         return string
 
 
-def get_cumulative_length(file_list):
+def get_cumulative_length(file_list, offset: float = 0.0):
     cumulative_length = 0
     for filename in file_list:
         # filepath = os.path.join(directory, filename)
         audio = AudioSegment.from_file(filename)
         cumulative_length += len(audio)
+    if offset:
+        cumulative_length += offset
+
     return cumulative_length / 1000.0  # Convert to seconds
 
 
@@ -134,6 +137,7 @@ if __name__ == "__main__":
     parser.add_argument("--input", type=str, required=True, help="input directory to work with")
     parser.add_argument("--output", type=str, default="generated_audio", help="output mp3 file path")
     parser.add_argument("--elelabs_voice", type=str, default="WerIBRrBvioo2do7d1qq", help="11labs voice id")
+    parser.add_argument("--elelabs_voice_alt", type=str, default="nH0VmfcJAjdwUZ3yUYTf", help="11labs voice id")
     parser.add_argument("--start_heading", type=str, default="", help="start at section named in generation")
     parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
     parser.add_argument("--ignore_title", action="store_true", default=False, help="ignore title and date in config")
@@ -141,11 +145,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     per_sentence = args.per_sentence
 
-    TOTAL_GEN_AUDIO_FILES = 0
-
     CHUNK_SIZE = 512  # size of chunks to write to file / download
     url_nathan = f"https://api.elevenlabs.io/v1/text-to-speech/{args.elelabs_voice}"
-    # url_newsread = "https://api.elevenlabs.io/v1/text-to-speech/frqJk20JrduLkgUgHtMR"
+    url_newsread = f"https://api.elevenlabs.io/v1/text-to-speech/{args.elelabs_voice_alt}"
 
     API_KEY = os.getenv("ELELABS_API_KEY")
     headers = {
@@ -175,8 +177,18 @@ if __name__ == "__main__":
         # for PVC
         "model_id": "eleven_turbo_v2",
         "voice_settings": {
-            "similarity_boost": 0.52,
-            "stability": 0.48,
+            "similarity_boost": 0.6,
+            "stability": 0.4,
+        },
+    }
+
+    payload_quote = {
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {
+            "similarity_boost": 0.66,
+            "stability": 0.55,
+            "style": 0.00,
+            "use_speaker_boost": True,
         },
     }
 
@@ -189,11 +201,15 @@ if __name__ == "__main__":
     skip_found = False
     section_titles = []
     fig_count = 1
+    section_audios = []
+
     # iterate over config file that contains headings, text, and figures
     for idx, (heading, content) in tqdm(enumerate(config.items())):
         i = str(idx).zfill(2)
         if heading in ["md", "date"]:
             continue
+        
+        section_files = []
         if not args.ignore_title:
             print(f"Generating audio for section {i}, {heading}")
             if len(args.start_heading) > 0:
@@ -218,9 +234,9 @@ if __name__ == "__main__":
             payload["text"] = heading
             # generate audio for heading
 
-            fname = f"{audio_dir}/audio_{i}_0.mp3"
+            fname = f"{audio_dir}/audio_{i}_00.mp3"
             request_audio(url_nathan, payload, headers, querystring, fname, per_sentence)
-            TOTAL_GEN_AUDIO_FILES += 1
+            section_files.append(fname)
 
         # iterate over list of dicts in content and
         for para in content:
@@ -235,6 +251,7 @@ if __name__ == "__main__":
                 # if so copy it to audio_dir with naming scheme
                 if os.path.exists(f"source/repeat/figure_{fig_count_str}.mp3"):
                     os.system(f"cp source/repeat/figure_{fig_count_str}.mp3 {audio_dir}/audio_{i}_{idx}.mp3")
+                    fname = f"{audio_dir}/audio_{i}_{idx}.mp3" # for merging ( see below )
 
                 # else generate the audio with index
                 else:
@@ -244,18 +261,23 @@ if __name__ == "__main__":
                     # copy fname to audio dir f"{audio_dir}/audio_{i}_{idx}.mp3"
                     os.system(f"cp {fname} {audio_dir}/audio_{i}_{idx}.mp3")
 
-                TOTAL_GEN_AUDIO_FILES += 1
                 fig_count += 1
 
             # if para is str, generate audio
             elif isinstance(para["content"], str):
-                payload["text"] = para["content"]
                 fname = f"{audio_dir}/audio_{i}_{idx}.mp3"
-                request_audio(url_nathan, payload, headers, querystring, fname, per_sentence)
-                TOTAL_GEN_AUDIO_FILES += 1
+                # if payload["text"] contains starts with >, use different voice
+                if para["content"].startswith(">"):
+                    payload_quote["text"] = para["content"]
+                    request_audio(url_newsread, payload_quote, headers, querystring, fname, per_sentence)
+                else:
+                    payload["text"] = para["content"]
+                    request_audio(url_nathan, payload, headers, querystring, fname, per_sentence)
             else:
                 print("Config Error: para is neither dict nor str")
 
+            section_files.append(fname)
+        section_audios.append(section_files)
     # concatenate all files in audio_dir with ffmpeg into input dir
 
     # if file generated_audio.mp3 already exists, delete it (prevent infinite loop)
@@ -268,20 +290,90 @@ if __name__ == "__main__":
     audio_files_short = [audio_dir + "/" + f for f in os.listdir(audio_dir) if f.endswith((".mp3"))]
     audio_files = sorted(audio_files_short)
 
-    # output_files = [f"{audio_dir}/audio_{i}.mp3" for i in range(0, TOTAL_GEN_AUDIO_FILES)]
     print(f"Sorted audio files {audio_files}")
 
     # [OPTIONAL] add source/repeat/farewell.mp3 to end of list (here to not mess with later code)
     # only do this if the farewell audio exists
     if os.path.exists(args.farewell_audio):
         audio_files.append(args.farewell_audio)
+    
+    # if transition audio exists, do fancy crossfade and merge
+    music_path = "source/repeat/transition-mono-v2.mp3"
+    if os.path.exists(music_path):
+        offset_duration = True
+        if os.path.exists(args.farewell_audio):
+            section_audios[-1].append(args.farewell_audio)
+    
+        # First concatenate all the sections (based on config) into files per section
+        # concatenate section audios into section files
+        for s, section_files in enumerate(section_audios):
+            s_str = str(s)
+            subprocess.run(
+                ["ffmpeg", "-y", "-i", "concat:" + "|".join(section_files), "-c", "copy", audio_dir + "/" + args.output + "_sec_"+s_str+".mp3"]
+            )
 
-    subprocess.run(
-        ["ffmpeg", "-i", "concat:" + "|".join(audio_files), "-c", "copy", audio_dir + "/" + args.output + ".mp3"]
-    )
+        # get the list of section audios (all with _sec_) in it
+        audio_chunks = sorted([f for f in audio_files_short if "_sec_" in f])
 
+        # while there are files in audio_chunks, crossfade a music item to it, then crossfade the next chunk to it, then append the last one
+        output_path = "experiment.mp3"
+        output_path_tmp = "experiment_tmp.mp3"
+        did_music_last = False
+
+        # transitioning to merging rather than crossfade, see:
+        # https://superuser.com/questions/1509582/ffmpeg-merge-two-audio-file-with-defined-overlapping-time
+        while len(audio_chunks) > 1:
+            # get the first two files in the list
+            first = audio_chunks.pop(0)
+
+            # "-y", overwrites the output file
+            if not did_music_last:
+                second = music_path
+                d = 1
+                did_music_last = True
+                
+                # crossfade the first two files
+                subprocess.run(
+                    ["ffmpeg", "-y", "-i", first, "-i", second, "-filter_complex", f"acrossfade=d={d}:c1=tri:c2=tri", output_path]
+                )
+            else:
+                # fade the first file
+                subprocess.run(
+                    ["ffmpeg", "-y", "-i", first, "-af", f"afade=t=out:st=0:d=1", output_path_tmp]
+                )
+                second = audio_chunks.pop(0)
+                # Concatentate the first file and the second ( no crossfade )
+                subprocess.run(
+                    ["ffmpeg", "-y",  "-i", output_path_tmp, "-i", second, "-filter_complex", f"concat=n=2:v=0:a=1", output_path]
+                )
+                did_music_last = False # redundant
+
+            
+            # copy expertment to experiment_copy to avoid file overwriting
+            os.system("cp experiment.mp3 experiment_tmp.mp3")
+
+            # prepend the output to the list (it's the beginnging audio)
+            audio_chunks.insert(0, output_path_tmp)
+            print(audio_chunks)
+
+        # move experiment to output + generated_audio.mp3
+        os.system(f"mv {output_path} {audio_dir}/{args.output}.mp3")
+
+        # delete experiment and experiment_tmp
+        os.system("rm experiment_tmp.mp3")
+
+    # else, keep the logic below
+    else:
+        offset_duration = False
+        subprocess.run(
+            ["ffmpeg", "-i", "concat:" + "|".join(audio_files), "-c", "copy", audio_dir + "/" + args.output + ".mp3"]
+        )
+    
     # TODO remove all acronyms and other filtering, some that are bad are SOTA and MoE
     # TODO add seperate voice for quotes / quote detection
+        
+    # if _sec_ in file in audio_files_short, remove it
+    audio_files_short = [f for f in audio_files_short if "_sec_" not in f]
 
     # Get length of the sections and print in podcast format
     # get indicies in between first set of _ (e.g. audio_N_Y.mp3, get unique Ns)
@@ -299,10 +391,13 @@ if __name__ == "__main__":
     # TODO make below work for multiple figures :/
     # iterate over headings for chapters, take first figure per section
     files_list_of_lists = []
+
+    offset = len(AudioSegment.from_file(music_path)) - 1000 if offset_duration else 0 # if using crossfade
+
     for s in sections:
         files = [f for f in audio_files_short if f.split("_")[1] == s]
         files_list_of_lists.append(files)
-    section_lens = [get_cumulative_length(list_l) for list_l in files_list_of_lists]
+    section_lens = [get_cumulative_length(list_l, offset = offset) for list_l in files_list_of_lists]
     total_len = sum(section_lens)
 
     print(f"Cumulative length of all audio files: {section_lens} seconds")

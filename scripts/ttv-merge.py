@@ -41,7 +41,7 @@ def adjust_audio_durations(audio_durations, is_image):
     return adjusted_durations
 
 
-def images_to_video(directory, skip=False):
+def images_to_video(directory, skip=False, m_file=None):
     image_dir = os.path.join(directory, "images")
     audio_dir = os.path.join(directory, "audio")
     audio_file = os.path.join(audio_dir, "generated_audio.mp3")
@@ -50,6 +50,8 @@ def images_to_video(directory, skip=False):
     audio_files = [f for f in os.listdir(audio_dir) if f.endswith((".mp3"))]
     audio_files = sorted(audio_files)
     audio_files = [f for f in audio_files if f not in ["generated_audio.mp3", "generated_audio_podcast.mp3"]]
+    # remove audio files with _sec_ in it
+    audio_files = [f for f in audio_files if "_sec_" not in f] # remove sections if using music
     audio_files = [os.path.join(audio_dir, f) for f in audio_files]
     audio_clips = [AudioFileClip(f) for f in audio_files]
     audio_durations = [c.duration for c in audio_clips]
@@ -57,6 +59,14 @@ def images_to_video(directory, skip=False):
     # load config file config.yml from directory, get boolean list of which are figures
     with open(directory + "config.yml", "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
+
+    # the indices to add the m_file length to are the first 'index' in each list of dictionaries in config
+    # get the indices of the first 'index' in each list of dictionaries
+    indices = [item[1][0]['index'] for i, item in enumerate(config.items()) if item[0] not in ["md", "date"]]
+    indices = indices[1:] # don't add time to the first frame
+    music_len = AudioFileClip(m_file).duration - 1
+    # add music_len to indices (the minus 1 is the offset for the crossfade)
+    audio_durations = [audio_durations[i] + music_len if i in indices else audio_durations[i] for i in range(len(audio_durations))]
 
     # create list of 0s for every item in nest dict except md and date
     is_image = []
@@ -158,7 +168,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, required=True, help="directory with images, config, and audio")
     parser.add_argument("--ignore_title", action="store_true", default=False, help="skip titles for generative talks")
+    parser.add_argument("--music_file", type=str, default="source/repeat/transition-mono-v2.mp3", help="audio file for used for music in audio (to get length)")
     args = parser.parse_args()
 
     # Convert images and audio to video
-    images_to_video(args.input, skip=args.ignore_title)
+    images_to_video(args.input, skip=args.ignore_title, m_file=args.music_file)

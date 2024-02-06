@@ -148,7 +148,7 @@ python scripts/ttv-merge.py --input=source/test-post/
 ```
 
 ----
-## Generated research  video
+## Generated research video
 Sick of workshopping 3-5minute videos no one watches? Use this tool! An example video is [here](https://youtu.be/mc-QmqMPhSA) and included in `examples/research-talk`.
 This section requires `imagemagick`:
 ```
@@ -176,6 +176,12 @@ ffmpeg -i input.mp4 -filter_complex "[0:v]setpts=PTS/(SPEED_FACTOR)[v];[0:a]atem
 Here's an example for 10%:
 ```
 ffmpeg -i examples/research-talk/video.mp4 -filter_complex "[0:v]setpts=PTS/1.1[v];[0:a]atempo=1.1[a]" -map "[v]" -map "[a]" output.mp4
+```
+
+### Other ffmpeg
+Generate silence:
+```
+ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 0.5 silence.mp3
 ```
 
 ## Tips

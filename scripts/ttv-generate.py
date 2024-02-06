@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 SYSTEM_PROMPT = (
     "The following instructions are text taken from a blog post on AI and ML,"
-    "please create diverse in style, elegant, and awesome images to accompany an audio version of this post: \n\n"
+    "Please create elegant, and awesome images: \n\n"
 )
 client = OpenAI()
 
@@ -67,7 +67,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, required=True, help="input text file dir")
     parser.add_argument("--do_not_gen", action="store_true", default=False, help="only download images")
-    parser.add_argument("--hf_fig_dir", type=str, default=None, help="directory with images for figures")
+    parser.add_argument(
+        "--hf_fig_dir", type=str, default="natolambert/interconnects-figures", help="directory with images for figures"
+    )
     args = parser.parse_args()
     hf_dataset = args.hf_fig_dir
 
