@@ -208,7 +208,7 @@ if __name__ == "__main__":
         i = str(idx).zfill(2)
         if heading in ["md", "date"]:
             continue
-        
+
         section_files = []
         if not args.ignore_title:
             print(f"Generating audio for section {i}, {heading}")
@@ -251,7 +251,7 @@ if __name__ == "__main__":
                 # if so copy it to audio_dir with naming scheme
                 if os.path.exists(f"source/repeat/figure_{fig_count_str}.mp3"):
                     os.system(f"cp source/repeat/figure_{fig_count_str}.mp3 {audio_dir}/audio_{i}_{idx}.mp3")
-                    fname = f"{audio_dir}/audio_{i}_{idx}.mp3" # for merging ( see below )
+                    fname = f"{audio_dir}/audio_{i}_{idx}.mp3"  # for merging ( see below )
 
                 # else generate the audio with index
                 else:
@@ -296,26 +296,35 @@ if __name__ == "__main__":
     # only do this if the farewell audio exists
     if os.path.exists(args.farewell_audio):
         audio_files.append(args.farewell_audio)
-    
+
     # if transition audio exists, do fancy crossfade and merge
     music_path = "source/repeat/transition-mono-v2.mp3"
     if os.path.exists(music_path):
         offset_duration = True
         if os.path.exists(args.farewell_audio):
             section_audios[-1].append(args.farewell_audio)
-    
+
         # First concatenate all the sections (based on config) into files per section
         # concatenate section audios into section files
         for s, section_files in enumerate(section_audios):
             s_str = str(s)
             subprocess.run(
-                ["ffmpeg", "-y", "-i", "concat:" + "|".join(section_files), "-c", "copy", audio_dir + "/" + args.output + "_sec_"+s_str+".mp3"]
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-i",
+                    "concat:" + "|".join(section_files),
+                    "-c",
+                    "copy",
+                    audio_dir + "/" + args.output + "_sec_" + s_str + ".mp3",
+                ]
             )
 
         # get the list of section audios (all with _sec_) in it
         audio_chunks = sorted([f for f in audio_files_short if "_sec_" in f])
 
-        # while there are files in audio_chunks, crossfade a music item to it, then crossfade the next chunk to it, then append the last one
+        # while there are files in audio_chunks, crossfade a music item to it,
+        # then crossfade the next chunk to it, then append the last one
         output_path = "experiment.mp3"
         output_path_tmp = "experiment_tmp.mp3"
         did_music_last = False
@@ -331,24 +340,41 @@ if __name__ == "__main__":
                 second = music_path
                 d = 1
                 did_music_last = True
-                
+
                 # crossfade the first two files
                 subprocess.run(
-                    ["ffmpeg", "-y", "-i", first, "-i", second, "-filter_complex", f"acrossfade=d={d}:c1=tri:c2=tri", output_path]
+                    [
+                        "ffmpeg",
+                        "-y",
+                        "-i",
+                        first,
+                        "-i",
+                        second,
+                        "-filter_complex",
+                        f"acrossfade=d={d}:c1=tri:c2=tri",
+                        output_path,
+                    ]
                 )
             else:
-                # fade the first file
-                subprocess.run(
-                    ["ffmpeg", "-y", "-i", first, "-af", f"afade=t=out:st=0:d=1", output_path_tmp]
-                )
+                # fade the first file (the music ending)
+                subprocess.run(["ffmpeg", "-y", "-i", first, "-af", "afade=t=out:st=0:d=1", output_path_tmp])
                 second = audio_chunks.pop(0)
                 # Concatentate the first file and the second ( no crossfade )
                 subprocess.run(
-                    ["ffmpeg", "-y",  "-i", output_path_tmp, "-i", second, "-filter_complex", f"concat=n=2:v=0:a=1", output_path]
+                    [
+                        "ffmpeg",
+                        "-y",
+                        "-i",
+                        output_path_tmp,
+                        "-i",
+                        second,
+                        "-filter_complex",
+                        "concat=n=2:v=0:a=1",
+                        output_path,
+                    ]
                 )
-                did_music_last = False # redundant
+                did_music_last = False  # redundant
 
-            
             # copy expertment to experiment_copy to avoid file overwriting
             os.system("cp experiment.mp3 experiment_tmp.mp3")
 
@@ -368,10 +394,10 @@ if __name__ == "__main__":
         subprocess.run(
             ["ffmpeg", "-i", "concat:" + "|".join(audio_files), "-c", "copy", audio_dir + "/" + args.output + ".mp3"]
         )
-    
+
     # TODO remove all acronyms and other filtering, some that are bad are SOTA and MoE
     # TODO add seperate voice for quotes / quote detection
-        
+
     # if _sec_ in file in audio_files_short, remove it
     audio_files_short = [f for f in audio_files_short if "_sec_" not in f]
 
@@ -392,12 +418,12 @@ if __name__ == "__main__":
     # iterate over headings for chapters, take first figure per section
     files_list_of_lists = []
 
-    offset = len(AudioSegment.from_file(music_path)) - 1000 if offset_duration else 0 # if using crossfade
+    offset = len(AudioSegment.from_file(music_path)) - 1000 if offset_duration else 0  # if using crossfade
 
     for s in sections:
         files = [f for f in audio_files_short if f.split("_")[1] == s]
         files_list_of_lists.append(files)
-    section_lens = [get_cumulative_length(list_l, offset = offset) for list_l in files_list_of_lists]
+    section_lens = [get_cumulative_length(list_l, offset=offset) for list_l in files_list_of_lists]
     total_len = sum(section_lens)
 
     print(f"Cumulative length of all audio files: {section_lens} seconds")
@@ -407,7 +433,7 @@ if __name__ == "__main__":
 
     print(section_titles[0])
     print(next(iter(config.values()))[0]["content"])
-    print("This is AI generated audio with Python and 11Labs")
+    print("This is AI generated audio with Python and 11Labs. Music generated by Meta's MusicGen.")
     print("Source code: https://github.com/natolambert/interconnects-tools")
     print("Original post: TODO")
     print()
