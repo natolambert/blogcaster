@@ -62,6 +62,9 @@ def request_audio(url, payload, headers, querystring, filename, normalize=True, 
     payload["text"] = payload["text"].replace("LLaVA", "llava")
     # some errors with dashes
     payload["text"] = payload["text"].replace("do-or-die", "do or die")
+    payload["text"] = payload["text"].replace("LLM-as-a-judge", "LLM as a judge")
+    # remove tricky () things, e.g. (RLHF)
+    payload["text"] = payload["text"].replace(" (RLHF)", "")
 
     # replace month abbreviations mar -> march etc
     payload["text"] = payload["text"].replace("Jan.", "January")
@@ -78,6 +81,13 @@ def request_audio(url, payload, headers, querystring, filename, normalize=True, 
     payload["text"] = payload["text"].replace("Dec.", "December")
 
     payload["text"] = payload["text"].replace("Anon. ", "Anonymous ")
+
+    # check if audio_boost in payload, if so remove it and grab the variable
+    if "audio_boost" in payload:
+        audio_boost = payload["audio_boost"]
+        del payload["audio_boost"]
+    else:
+        audio_boost = 0.0
 
     if not os.path.exists(filename):
         try:
@@ -127,6 +137,21 @@ def request_audio(url, payload, headers, querystring, filename, normalize=True, 
                 ]
             )
 
+        # boost volume if included with ffmpeg
+        if audio_boost > 0:
+            print(f"-> boosting audio file {filename}")
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-i",
+                    filename,
+                    "-af",
+                    f"volume={audio_boost}",
+                    filename,
+                ]
+            )
+
     else:
         print(f"-> audio file {filename} already exists, skipping request")
 
@@ -142,6 +167,9 @@ if __name__ == "__main__":
     parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
     parser.add_argument("--ignore_title", action="store_true", default=False, help="ignore title and date in config")
     parser.add_argument("--per_sentence", action="store_true", default=False, help="generate audio per sentence")
+    parser.add_argument(
+        "--boost", type=float, default=0.0, help="audio boost for quiet 11labs voices (core voice only, not quotes)"
+    )
     args = parser.parse_args()
     per_sentence = args.per_sentence
 
@@ -181,6 +209,8 @@ if __name__ == "__main__":
             "stability": 0.4,
         },
     }
+    if args.boost > 0:
+        payload["audio_boost"] = args.boost
 
     payload_quote = {
         "model_id": "eleven_multilingual_v2",
