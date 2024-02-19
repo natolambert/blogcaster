@@ -5,8 +5,12 @@ import os
 
 import cv2
 import yaml
-from moviepy.editor import (AudioFileClip, ImageClip, VideoFileClip,
-                            concatenate_videoclips)
+from moviepy.editor import (
+    AudioFileClip,
+    ImageClip,
+    VideoFileClip,
+    concatenate_videoclips,
+)
 
 
 def adjust_audio_durations(audio_durations, is_image):
@@ -87,9 +91,10 @@ def images_to_video(directory, skip=False, use_music=False, m_file=None):
                 if "alt_text" in item.get("content", {}):
                     if ".mp4" in item["content"]["path"]:
                         is_video.append(True)
+                        is_image.append(False)
                     else:
                         is_video.append(False)
-                    is_image.append(True)
+                        is_image.append(True)
                 else:
                     is_image.append(False)
                     is_video.append(False)
@@ -112,7 +117,7 @@ def images_to_video(directory, skip=False, use_music=False, m_file=None):
 
     assert (len(image_files) + len(video_files)) == len(
         new_audio_durations
-    ), f"Number of images {len(image_files) + len(video_files)}and audio files {len(new_audio_durations)} must be the same" # noqa
+    ), f"Number of images {len(image_files) + len(video_files)} and audio files {len(new_audio_durations)} must be the same"  # noqa
 
     # Load the first image to get dimensions
     first_image = cv2.imread(os.path.join(image_dir, image_files[0]))
@@ -162,10 +167,21 @@ def images_to_video(directory, skip=False, use_music=False, m_file=None):
     # load audio
     audio_clip = AudioFileClip(audio_file)
     # audio_duration = audio_clip.duration
+    for i, i_v, d, d_new in zip(is_image, is_video, audio_durations, new_audio_durations):
+        print(i, i_v, d, d_new)
 
-    # Calculate duration for each image
-    # image_duration = audio_duration / len(image_files)
-    clips = [ImageClip(m).set_duration(d) for m, d in zip(all_images, new_audio_durations)]
+    print(sum(audio_durations), sum(new_audio_durations))
+
+    # Assign duration for each image
+    # first, we need to copy the previous image for the figures that are videos (is_video), which is added after
+
+    all_images_for_video = all_images.copy()
+    for i, is_vid in enumerate(is_video):
+        if is_vid:
+            all_images_for_video.insert(i, all_images_for_video[i - 1])
+
+    # extend all_video there to match length of new_audio_durations
+    clips = [ImageClip(m).set_duration(d) for m, d in zip(all_images_for_video, new_audio_durations)]
 
     concat_clip = concatenate_videoclips(clips, method="compose")
     concat_clip_audio = concat_clip.set_audio(audio_clip)
@@ -176,13 +192,42 @@ def images_to_video(directory, skip=False, use_music=False, m_file=None):
         video_files = [os.path.join(image_dir, f) for f in video_files]
         video_clips = [VideoFileClip(f) for f in video_files]
 
+        # resuze video if bigger than desired_width or desired_height or pad if too small
+        for i, clip in enumerate(video_clips):
+            (original_width, original_height) = clip.size[:2]
+            ratio_width = desired_width / float(original_width)
+            ratio_height = desired_height / float(original_height)
+            ratio = min(ratio_width, ratio_height)
+
+            # Compute new dimensions
+            new_width = int(original_width * ratio)
+            new_height = int(original_height * ratio)
+
+            # if height or width change:
+            if (new_height, new_width) != (original_height, original_width):
+                clip = clip.resize((new_width, new_height))
+
+                # use clip.margin (left, right, top, bottom) to center the video
+                # in the same size
+                clip = clip.margin(
+                    left=int((desired_width - new_width) / 2),
+                    right=int((desired_width - new_width) / 2),
+                    top=int((desired_height - new_height) / 2),
+                    bottom=int((desired_height - new_height) / 2),
+                )
+            video_clips[i] = clip
+
+        # for video clips, print the size
+        # for clip in video_clips:
+        #     print(clip.size)
+
         # process audio_durations and is_video to figure out insert_time for each video
         insert_times = []
         offset = 0  # offset the insert time based on cumualtive length of added videos
         video_count = 0
         for i, is_vid in enumerate(is_video):
             if is_vid:
-                insert_times.append(sum(audio_durations[: i + 1]) + offset) # noqa
+                insert_times.append(sum(audio_durations[: i + 1]) + offset)  # noqa
                 offset += video_clips[video_count].duration
                 print(video_clips[video_count].duration, insert_times[-1], offset)
                 video_count += 1
