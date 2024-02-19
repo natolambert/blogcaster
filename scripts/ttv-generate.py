@@ -45,7 +45,7 @@ def get_image(idx, string):
             model="dall-e-3",
             prompt=prompt,
             size="1792x1024",
-            quality="hd",
+            quality="standard",
             n=1,
         )
         # print(f'Response code: {response.status_code}')
@@ -57,7 +57,7 @@ def get_image(idx, string):
         with open(f"temp-images/img_{idx}.png", "wb") as file:
             file.write(image_response.content)
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Idx: {idx}, Error: {e}")
 
     time.sleep(25)  # 20/23 sec was rate limit erroring
 
@@ -108,11 +108,10 @@ if __name__ == "__main__":
                 idx = str(len(prompts)).zfill(3)
                 path = para["content"]["path"]
                 # if path ends with png, jpeg, jpg, or webp, split on . and take last
-                if path.endswith((".png", ".jpeg", ".jpg", ".webp")):
+                if path.endswith((".png", ".jpeg", ".jpg", ".webp", ".mp4")):
                     img_type = path.split(".")[-1]  # one of png, jpg, jpeg, webp
                 else:
                     img_type = "png"
-
                 # if path is url, download to img_{idx}.png with curl
                 if path.startswith("http"):
                     # TODO debug this again

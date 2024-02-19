@@ -147,10 +147,13 @@ def request_audio(url, payload, headers, querystring, filename, normalize=True, 
                     "-i",
                     filename,
                     "-af",
-                    f"volume={audio_boost}",
-                    filename,
+                    f"'volume={audio_boost}'",
+                    "temp.mp3",
                 ]
             )
+
+            # move temp to filename with overwrite
+            os.system(f"mv temp.mp3 {filename}")
 
     else:
         print(f"-> audio file {filename} already exists, skipping request")
@@ -167,6 +170,7 @@ if __name__ == "__main__":
     parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
     parser.add_argument("--ignore_title", action="store_true", default=False, help="ignore title and date in config")
     parser.add_argument("--per_sentence", action="store_true", default=False, help="generate audio per sentence")
+    parser.add_argument("--section_music", action="store_true", default=False, help="use section music")
     parser.add_argument(
         "--boost", type=float, default=0.0, help="audio boost for quiet 11labs voices (core voice only, not quotes)"
     )
@@ -327,99 +331,106 @@ if __name__ == "__main__":
     if os.path.exists(args.farewell_audio):
         audio_files.append(args.farewell_audio)
 
-    # if transition audio exists, do fancy crossfade and merge
-    music_path = "source/repeat/transition-mono-v2.mp3"
-    if os.path.exists(music_path):
-        offset_duration = True
-        if os.path.exists(args.farewell_audio):
-            section_audios[-1].append(args.farewell_audio)
+    if args.section_music:
+        print("----------------------------------")
+        print("Merging with section music:")
+        print("----------------------------------")
+        # if transition audio exists, do fancy crossfade and merge
+        music_path = "source/repeat/transition-mono-v2.mp3"
+        if os.path.exists(music_path):
+            offset_duration = True
+            if os.path.exists(args.farewell_audio):
+                section_audios[-1].append(args.farewell_audio)
 
-        # First concatenate all the sections (based on config) into files per section
-        # concatenate section audios into section files
-        for s, section_files in enumerate(section_audios):
-            s_str = str(s)
-            subprocess.run(
-                [
-                    "ffmpeg",
-                    "-y",
-                    "-i",
-                    "concat:" + "|".join(section_files),
-                    "-c",
-                    "copy",
-                    audio_dir + "/" + args.output + "_sec_" + s_str + ".mp3",
-                ]
-            )
-
-        # get the list of section audios (all with _sec_) in it
-        audio_chunks = sorted([f for f in audio_files_short if "_sec_" in f])
-
-        # while there are files in audio_chunks, crossfade a music item to it,
-        # then crossfade the next chunk to it, then append the last one
-        output_path = "experiment.mp3"
-        output_path_tmp = "experiment_tmp.mp3"
-        did_music_last = False
-
-        # transitioning to merging rather than crossfade, see:
-        # https://superuser.com/questions/1509582/ffmpeg-merge-two-audio-file-with-defined-overlapping-time
-        while len(audio_chunks) > 1:
-            # get the first two files in the list
-            first = audio_chunks.pop(0)
-
-            # "-y", overwrites the output file
-            if not did_music_last:
-                second = music_path
-                d = 1
-                did_music_last = True
-
-                # crossfade the first two files
+            # First concatenate all the sections (based on config) into files per section
+            # concatenate section audios into section files
+            for s, section_files in enumerate(section_audios):
+                s_str = str(s)
                 subprocess.run(
                     [
                         "ffmpeg",
                         "-y",
                         "-i",
-                        first,
-                        "-i",
-                        second,
-                        "-filter_complex",
-                        f"acrossfade=d={d}:c1=tri:c2=tri",
-                        output_path,
+                        "concat:" + "|".join(section_files),
+                        "-c",
+                        "copy",
+                        audio_dir + "/" + args.output + "_sec_" + s_str + ".mp3",
                     ]
                 )
-            else:
-                # fade the first file (the music ending)
-                subprocess.run(["ffmpeg", "-y", "-i", first, "-af", "afade=t=out:st=0:d=1", output_path_tmp])
-                second = audio_chunks.pop(0)
-                # Concatentate the first file and the second ( no crossfade )
-                subprocess.run(
-                    [
-                        "ffmpeg",
-                        "-y",
-                        "-i",
-                        output_path_tmp,
-                        "-i",
-                        second,
-                        "-filter_complex",
-                        "concat=n=2:v=0:a=1",
-                        output_path,
-                    ]
-                )
-                did_music_last = False  # redundant
 
-            # copy expertment to experiment_copy to avoid file overwriting
-            os.system("cp experiment.mp3 experiment_tmp.mp3")
+            # get the list of section audios (all with _sec_) in it
+            audio_chunks = sorted([f for f in audio_files_short if "_sec_" in f])
 
-            # prepend the output to the list (it's the beginnging audio)
-            audio_chunks.insert(0, output_path_tmp)
-            print(audio_chunks)
+            # while there are files in audio_chunks, crossfade a music item to it,
+            # then crossfade the next chunk to it, then append the last one
+            output_path = "experiment.mp3"
+            output_path_tmp = "experiment_tmp.mp3"
+            did_music_last = False
 
-        # move experiment to output + generated_audio.mp3
-        os.system(f"mv {output_path} {audio_dir}/{args.output}.mp3")
+            # transitioning to merging rather than crossfade, see:
+            # https://superuser.com/questions/1509582/ffmpeg-merge-two-audio-file-with-defined-overlapping-time
+            while len(audio_chunks) > 1:
+                # get the first two files in the list
+                first = audio_chunks.pop(0)
 
-        # delete experiment and experiment_tmp
-        os.system("rm experiment_tmp.mp3")
+                # "-y", overwrites the output file
+                if not did_music_last:
+                    second = music_path
+                    d = 1
+                    did_music_last = True
+
+                    # crossfade the first two files
+                    subprocess.run(
+                        [
+                            "ffmpeg",
+                            "-y",
+                            "-i",
+                            first,
+                            "-i",
+                            second,
+                            "-filter_complex",
+                            f"acrossfade=d={d}:c1=tri:c2=tri",
+                            output_path,
+                        ]
+                    )
+                else:
+                    # fade the first file (the music ending)
+                    subprocess.run(["ffmpeg", "-y", "-i", first, "-af", "afade=t=out:st=0:d=1", output_path_tmp])
+                    second = audio_chunks.pop(0)
+                    # Concatentate the first file and the second ( no crossfade )
+                    subprocess.run(
+                        [
+                            "ffmpeg",
+                            "-y",
+                            "-i",
+                            output_path_tmp,
+                            "-i",
+                            second,
+                            "-filter_complex",
+                            "concat=n=2:v=0:a=1",
+                            output_path,
+                        ]
+                    )
+                    did_music_last = False  # redundant
+
+                # copy expertment to experiment_copy to avoid file overwriting
+                os.system("cp experiment.mp3 experiment_tmp.mp3")
+
+                # prepend the output to the list (it's the beginnging audio)
+                audio_chunks.insert(0, output_path_tmp)
+                print(audio_chunks)
+
+            # move experiment to output + generated_audio.mp3
+            # os.system(f"mv {output_path} {audio_dir}/{args.output}.mp3")
+
+            # delete experiment and experiment_tmp
+            # os.system("rm experiment_tmp.mp3")
 
     # else, keep the logic below
     else:
+        print("----------------------------------")
+        print("Basic concatenation:")
+        print("----------------------------------")
         offset_duration = False
         subprocess.run(
             ["ffmpeg", "-i", "concat:" + "|".join(audio_files), "-c", "copy", audio_dir + "/" + args.output + ".mp3"]

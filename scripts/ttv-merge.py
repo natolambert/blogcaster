@@ -5,7 +5,8 @@ import os
 
 import cv2
 import yaml
-from moviepy.editor import AudioFileClip, ImageClip, concatenate_videoclips
+from moviepy.editor import (AudioFileClip, ImageClip, VideoFileClip,
+                            concatenate_videoclips)
 
 
 def adjust_audio_durations(audio_durations, is_image):
@@ -41,7 +42,7 @@ def adjust_audio_durations(audio_durations, is_image):
     return adjusted_durations
 
 
-def images_to_video(directory, skip=False, m_file=None):
+def images_to_video(directory, skip=False, use_music=False, m_file=None):
     image_dir = os.path.join(directory, "images")
     audio_dir = os.path.join(directory, "audio")
     audio_file = os.path.join(audio_dir, "generated_audio.mp3")
@@ -64,7 +65,10 @@ def images_to_video(directory, skip=False, m_file=None):
     # get the indices of the first 'index' in each list of dictionaries
     indices = [item[1][0]["index"] for i, item in enumerate(config.items()) if item[0] not in ["md", "date"]]
     indices = indices[1:]  # don't add time to the first frame
-    music_len = AudioFileClip(m_file).duration - 1
+    if use_music and (m_file is not None):
+        music_len = AudioFileClip(m_file).duration - 1
+    else:
+        music_len = 0
     # add music_len to indices (the minus 1 is the offset for the crossfade)
     audio_durations = [
         audio_durations[i] + music_len if i in indices else audio_durations[i] for i in range(len(audio_durations))
@@ -72,16 +76,23 @@ def images_to_video(directory, skip=False, m_file=None):
 
     # create list of 0s for every item in nest dict except md and date
     is_image = []
+    is_video = []
     for key, value in config.items():
         if key in ["md", "date"]:
             continue
         else:
             is_image.append(False)
+            is_video.append(False)
             for item in value:
                 if "alt_text" in item.get("content", {}):
+                    if ".mp4" in item["content"]["path"]:
+                        is_video.append(True)
+                    else:
+                        is_video.append(False)
                     is_image.append(True)
                 else:
                     is_image.append(False)
+                    is_video.append(False)
 
     # for talks
     if skip:
@@ -97,9 +108,11 @@ def images_to_video(directory, skip=False, m_file=None):
     image_files = [f for f in os.listdir(image_dir) if f.endswith((".jpg", ".jpeg", ".png", ".webp"))]
     image_files = sorted(image_files)
 
-    assert len(image_files) == len(
+    video_files = [f for f in os.listdir(image_dir) if f.endswith(".mp4")]
+
+    assert (len(image_files) + len(video_files)) == len(
         new_audio_durations
-    ), f"Number of images {len(image_files) }and audio files {len(new_audio_durations)} must be the same"
+    ), f"Number of images {len(image_files) + len(video_files)}and audio files {len(new_audio_durations)} must be the same" # noqa
 
     # Load the first image to get dimensions
     first_image = cv2.imread(os.path.join(image_dir, image_files[0]))
@@ -156,9 +169,34 @@ def images_to_video(directory, skip=False, m_file=None):
 
     concat_clip = concatenate_videoclips(clips, method="compose")
     concat_clip_audio = concat_clip.set_audio(audio_clip)
+
+    # if files with *.mp4 exist in the directory, we will add videos in line
+    if len(video_files) > 0:
+        video_files = sorted(video_files)
+        video_files = [os.path.join(image_dir, f) for f in video_files]
+        video_clips = [VideoFileClip(f) for f in video_files]
+
+        # process audio_durations and is_video to figure out insert_time for each video
+        insert_times = []
+        offset = 0  # offset the insert time based on cumualtive length of added videos
+        video_count = 0
+        for i, is_vid in enumerate(is_video):
+            if is_vid:
+                insert_times.append(sum(audio_durations[: i + 1]) + offset) # noqa
+                offset += video_clips[video_count].duration
+                print(video_clips[video_count].duration, insert_times[-1], offset)
+                video_count += 1
+
+        for time, clip in zip(insert_times, video_clips):
+            # clip = clip.set_duration(5) # max 5 seconds for now
+            first_part = concat_clip_audio.subclip(0, time)
+            second_part = concat_clip_audio.subclip(time)
+            concat_clip_audio = concatenate_videoclips([first_part, clip, second_part], method="compose")
+
     concat_clip_audio.write_videofile(
         "new_filename.mp4",
         fps=30,
+        threads=8,
         codec="libx264",
         audio_codec="aac",
         temp_audiofile="temp-audio.m4a",
@@ -170,6 +208,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, required=True, help="directory with images, config, and audio")
     parser.add_argument("--ignore_title", action="store_true", default=False, help="skip titles for generative talks")
+    parser.add_argument("--use_music", action="store_true", default=False, help="use music for audio")
     parser.add_argument(
         "--music_file",
         type=str,
@@ -179,4 +218,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Convert images and audio to video
-    images_to_video(args.input, skip=args.ignore_title, m_file=args.music_file)
+    images_to_video(args.input, skip=args.ignore_title, use_music=args.use_music, m_file=args.music_file)

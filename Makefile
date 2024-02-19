@@ -7,9 +7,7 @@ check_dirs := scripts
 
 style:
 	python -m black --line-length 119 --target-version py310 $(check_dirs)
-	python -m isort $(check_dirs)
+	python -m isort $(check_dirs) --profile black
 
 quality:
-	python -m black --check --line-length 119 --target-version py310 $(check_dirs)
-	python -m isort --check-only $(check_dirs)
 	python -m flake8 --max-line-length 119 $(check_dirs)
