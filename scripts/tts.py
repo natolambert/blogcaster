@@ -50,6 +50,11 @@ def request_audio(url, payload, headers, querystring, filename, normalize=True, 
     payload["text"] = payload["text"].replace("\n", " ")
     payload["text"] = payload["text"].replace(">", "")
     payload["text"] = payload["text"].replace("**", "")
+    payload["text"] = payload["text"].replace(" | ", " ")
+    
+    # remove weird slashes
+    payload["text"] = payload["text"].replace("\ ", " ")
+
     # acronyms
     payload["text"] = payload["text"].replace("e.g.", "e g")
     payload["text"] = payload["text"].replace("i.e.", "i e")
@@ -81,6 +86,7 @@ def request_audio(url, payload, headers, querystring, filename, normalize=True, 
     payload["text"] = payload["text"].replace("Dec.", "December")
 
     payload["text"] = payload["text"].replace("Anon. ", "Anonymous ")
+    # TODO: ready-to-use, DALLE to DALL E
 
     # check if audio_boost in payload, if so remove it and grab the variable
     if "audio_boost" in payload:
