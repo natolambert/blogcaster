@@ -15,7 +15,39 @@ SYSTEM_PROMPT = (
     "The following instructions are text taken from a blog post on AI and ML,"
     "Please create elegant, and awesome images: \n\n"
 )
+
+SYSTEM_PROMPT_STLYE = (
+    "Please draw a diagram to accompany this summary or short snippet from a blog post."
+    "It needs a white background with sky blue coloring (some light grey) "
+    "and be in the style of 3blue1brown videos and and famous drawings. A little flashy. \n\n"
+    # "Shapes are good, but not too much text. Slight hint of a hand drawn image. "
+    # "Just the artistic image with a good amount of detail. \n\n"
+)
+# from OpenAI docs
+# https://platform.openai.com/docs/guides/images/usage?context=node
+REWRITE_OVERRIDE = (
+    "I NEED to test how the tool works with extremely simple prompts. DO NOT add any detail, just use it AS-IS:"
+)
+
 client = OpenAI()
+
+
+def summarize_text(text):
+    """
+    Tool to mitigate randomness of generations. Used when text length > 250 characters.
+    """
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Summarize content you are provided in one sentence."},
+            {"role": "user", "content": text},
+        ],
+        temperature=0.7,
+        max_tokens=64,
+        top_p=1,
+    )
+
+    return response.choices[0].message.content
 
 
 def strip_title(string):
@@ -29,15 +61,30 @@ def strip_title(string):
         return string
 
 
-def get_image(idx, string):
+def get_image(idx, inputs, vivid=True, hd=True, rewrite=True, no_sleep=False):
+    """
+    Default selections tested for style consistency and quality.
+    """
+    string, title = inputs  # unpack inputs
+
+    style = "vivid" if vivid else "natural"
+    quality = "hd" if hd else "standard"
+
     # when figures exist, do not generate (string is None)
     if string is None:
         return
 
-    prompt = SYSTEM_PROMPT + string
+    if len(string) > 250:
+        string = summarize_text(string)
+    elif len(string) < 50 and idx > 0:
+        string += f"\n For context, the title of this post is {title}"
+    prompt = SYSTEM_PROMPT_STLYE + string
     # truncate too long of prompts (4000 is limit)
-    if len(prompt) > 4000:
-        prompt = prompt[:4000]
+    # if len(prompt) > 4000:
+    #     prompt = prompt[:4000]
+
+    if not rewrite:
+        prompt = REWRITE_OVERRIDE + prompt
 
     try:
         # call DALLE 3
@@ -45,7 +92,8 @@ def get_image(idx, string):
             model="dall-e-3",
             prompt=prompt,
             size="1792x1024",
-            quality="standard",
+            quality=quality,  # hd for higher quality
+            style=style,  # vivid for more extreme
             n=1,
         )
         # print(f'Response code: {response.status_code}')
@@ -59,7 +107,8 @@ def get_image(idx, string):
     except Exception as e:
         print(f"Idx: {idx}, Error: {e}")
 
-    time.sleep(25)  # 20/23 sec was rate limit erroring
+    if not no_sleep:
+        time.sleep(25)  # 20/23 sec was rate limit erroring
 
 
 if __name__ == "__main__":
@@ -94,7 +143,10 @@ if __name__ == "__main__":
 
         if first_gen:
             # generate audio file for Title + date
-            heading = heading + " was published on " + config["date"] + "."
+            if config["date"] is None:
+                heading = heading + " by Nathan Lambert."
+            else:
+                heading = heading + " was published on " + config["date"] + "."
             first_gen = False
 
         prompts.append(heading)
@@ -167,10 +219,12 @@ if __name__ == "__main__":
     if not os.path.exists("temp-images"):
         os.makedirs("temp-images")
 
+    title = prompts[0]
+    title = [title for _ in range(len(prompts))]
     # if --do_not_gen, do not do this
     if not args.do_not_gen:
         with Pool(processes=3) as pool:
-            pool.starmap(get_image, enumerate(prompts))
+            pool.starmap(get_image, enumerate(zip(prompts, title)))
 
         # move all images from temp-images to args.input/images
         os.system(f"mv temp-images/* {args.input}images")

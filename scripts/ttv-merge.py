@@ -5,9 +5,14 @@ import os
 
 import cv2
 import yaml
+from moviepy.editor import (
+    AudioFileClip,
+    ImageClip,
+    VideoFileClip,
+    concatenate_videoclips,
+)
 from pydub import AudioSegment
-from moviepy.editor import (AudioFileClip, ImageClip, VideoFileClip,
-                            concatenate_videoclips)
+
 
 def get_cumulative_length(file_list, offset: float = 0.0):
     cumulative_length = 0
@@ -125,7 +130,7 @@ def images_to_video(directory, skip=False, use_music=False, m_file=None):
 
     assert (len(image_files) + len(video_files)) == len(
         new_audio_durations
-    ), f"Number of images {len(image_files) + len(video_files)} and audio files {len(new_audio_durations)} must be the same" # noqa
+    ), f"Number of images {len(image_files) + len(video_files)} and audio files {len(new_audio_durations)} must be the same"  # noqa
 
     # Load the first image to get dimensions
     first_image = cv2.imread(os.path.join(image_dir, image_files[0]))
@@ -177,7 +182,7 @@ def images_to_video(directory, skip=False, use_music=False, m_file=None):
     # audio_duration = audio_clip.duration
     # for i, i_v, d, d_new in zip(is_image, is_video, audio_durations, new_audio_durations):
     #     print(i, i_v, d, d_new)
-    
+
     # print(sum(audio_durations), sum(new_audio_durations))
 
     # Assign duration for each image
@@ -215,7 +220,7 @@ def images_to_video(directory, skip=False, use_music=False, m_file=None):
             if (new_height, new_width) != (original_height, original_width):
                 clip = clip.resize((new_width, new_height))
 
-                # use clip.margin (left, right, top, bottom) to center the video 
+                # use clip.margin (left, right, top, bottom) to center the video
                 # in the same size
                 clip = clip.margin(
                     left=int((desired_width - new_width) / 2),
@@ -235,7 +240,7 @@ def images_to_video(directory, skip=False, use_music=False, m_file=None):
         video_count = 0
         for i, is_vid in enumerate(is_video):
             if is_vid:
-                insert_times.append(sum(audio_durations[: i + 1]) + offset) # noqa
+                insert_times.append(sum(audio_durations[: i + 1]) + offset)  # noqa
                 offset += video_clips[video_count].duration
                 print(video_clips[video_count].duration, insert_times[-1], offset)
                 video_count += 1

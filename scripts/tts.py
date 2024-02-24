@@ -51,9 +51,9 @@ def request_audio(url, payload, headers, querystring, filename, normalize=True, 
     payload["text"] = payload["text"].replace(">", "")
     payload["text"] = payload["text"].replace("**", "")
     payload["text"] = payload["text"].replace(" | ", " ")
-    
+
     # remove weird slashes
-    payload["text"] = payload["text"].replace("\ ", " ")
+    payload["text"] = payload["text"].replace("\\ ", " ")
 
     # acronyms
     payload["text"] = payload["text"].replace("e.g.", "e g")
