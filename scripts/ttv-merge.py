@@ -11,8 +11,11 @@ from moviepy.editor import (
     VideoFileClip,
     concatenate_videoclips,
 )
-from pydub import AudioSegment
+import moviepy.editor as mp
 
+from pydub import AudioSegment
+from PIL import Image
+import numpy as np
 
 def get_cumulative_length(file_list, offset: float = 0.0):
     cumulative_length = 0
@@ -176,7 +179,7 @@ def images_to_video(directory, skip=False, use_music=False, m_file=None):
 
     # Now, resized_images contains all your frames with uniform dimensions
     all_images = resized_images
-
+ 
     # load audio
     audio_clip = AudioFileClip(audio_file)
     # audio_duration = audio_clip.duration
@@ -250,6 +253,17 @@ def images_to_video(directory, skip=False, use_music=False, m_file=None):
             first_part = concat_clip_audio.subclip(0, time)
             second_part = concat_clip_audio.subclip(time)
             concat_clip_audio = concatenate_videoclips([first_part, clip, second_part], method="compose")
+
+    # watermark_exists = os.path.exists("source/repeat/watermark.jpg")
+    # if watermark_exists:
+    #     print("WATERMARKING VIDEO")
+    #     logo = (mp.ImageClip("source/repeat/watermark.jpg")
+    #       .set_duration(concat_clip_audio.duration)
+    #       .margin(right=8, top=8, bottom=8, opacity=0) # (optional) logo-border padding
+    #       .set_pos(("right","bottom")))
+    #         #   .resize(height=75) # if you need to resize...
+
+    #     concat_clip_audio = mp.CompositeVideoClip([concat_clip_audio, logo])
 
     concat_clip_audio.write_videofile(
         "new_filename.mp4",
