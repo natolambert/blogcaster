@@ -37,7 +37,7 @@ def get_cumulative_length(file_list, offset: float = 0.0):
     return cumulative_length / 1000.0  # Convert to seconds
 
 
-def request_audio(url, payload, headers, querystring, filename, normalize=True, per_sentence=False):
+def request_audio(url, payload, headers, querystring, filename, per_sentence=False):
     """
     A function to replace the following code:
     response = requests.post(url_nathan, json=payload, headers=headers, params=querystring)
@@ -86,6 +86,9 @@ def request_audio(url, payload, headers, querystring, filename, normalize=True, 
     payload["text"] = payload["text"].replace("Dec.", "December")
 
     payload["text"] = payload["text"].replace("Anon. ", "Anonymous ")
+    payload["text"] = payload["text"].replace("Arxiv ", "Archive ")
+    payload["text"] = payload["text"].replace("arxiv ", "Archive ")
+    payload["text"] = payload["text"].replace("arXiv ", "Archive ")
     # TODO: ready-to-use, DALLE to DALL E
 
     # check if audio_boost in payload, if so remove it and grab the variable
@@ -123,25 +126,6 @@ def request_audio(url, payload, headers, querystring, filename, normalize=True, 
         except Exception as e:
             print(f"Error: {e}")
 
-        # normalize audio file
-        if normalize:
-            print(f"-> normalizing audio file {filename}")
-            # default bitrate 128K and sample rate 44100 for 11labs
-            subprocess.run(
-                [
-                    "ffmpeg-normalize",
-                    filename,
-                    "-o",
-                    filename,
-                    "-f",
-                    "-c:a",
-                    "libmp3lame",
-                    "-b:a",
-                    "128K",
-                    "-ar",
-                    "44100",
-                ]
-            )
 
         # boost volume if included with ffmpeg
         if audio_boost > 0:
@@ -174,9 +158,10 @@ if __name__ == "__main__":
     parser.add_argument("--elelabs_voice_alt", type=str, default="nH0VmfcJAjdwUZ3yUYTf", help="11labs voice id")
     parser.add_argument("--start_heading", type=str, default="", help="start at section named in generation")
     parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
-    parser.add_argument("--ignore_title", action="store_true", default=False, help="ignore title and date in config")
+    parser.add_argument("--ignore_title", action="store_true", default=False, help="ignore title and date in config (for research video example)")
     parser.add_argument("--per_sentence", action="store_true", default=False, help="generate audio per sentence")
     parser.add_argument("--section_music", action="store_true", default=False, help="use section music")
+    parser.add_argument("--use_quote_voice", action="store_true", default=False, help="use quote voice" )
     parser.add_argument(
         "--boost", type=float, default=0.0, help="audio boost for quiet 11labs voices (core voice only, not quotes)"
     )
@@ -222,15 +207,18 @@ if __name__ == "__main__":
     if args.boost > 0:
         payload["audio_boost"] = args.boost
 
-    payload_quote = {
-        "model_id": "eleven_multilingual_v2",
-        "voice_settings": {
-            "similarity_boost": 0.66,
-            "stability": 0.55,
-            "style": 0.00,
-            "use_speaker_boost": True,
-        },
-    }
+    if args.use_quote_voice:
+        payload_quote = {
+            "model_id": "eleven_multilingual_v2",
+            "voice_settings": {
+                "similarity_boost": 0.66,
+                "stability": 0.55,
+                "style": 0.00,
+                "use_speaker_boost": True,
+            },
+        }
+    else:
+        payload_quote = payload
 
     # create dir audio at args.input + audio
     audio_dir = args.input + "audio"
@@ -270,6 +258,9 @@ if __name__ == "__main__":
                 # generate audio file for Title + date
                 heading = heading + " was published on " + config["date"] + "."
                 first_gen = False
+            else:
+                # articial pause
+                heading = 'Section: ' + heading
 
             payload["text"] = heading
             # generate audio for heading
@@ -444,6 +435,27 @@ if __name__ == "__main__":
 
     # TODO remove all acronyms and other filtering, some that are bad are SOTA and MoE
     # TODO add seperate voice for quotes / quote detection
+    # normalize audio file
+    filename = audio_dir + "/" + args.output + ".mp3"
+    print(f"-> normalizing audio file {filename}")
+    # default bitrate 128K and sample rate 44100 for 11labs
+    subprocess.run(
+        [
+            "ffmpeg-normalize",
+            filename,
+            "-o",
+            filename,
+            "-f",
+            "-c:a",
+            "libmp3lame",
+            "-b:a",
+            "128K",
+            "-ar",
+            "44100",
+            "--target-level",
+            "-20", # in DB, normally before was about -24
+        ]
+    )
 
     # if _sec_ in file in audio_files_short, remove it
     audio_files_short = [f for f in audio_files_short if "_sec_" not in f]
