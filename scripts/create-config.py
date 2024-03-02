@@ -3,6 +3,7 @@
 import argparse
 import os
 import re
+from urllib.parse import unquote
 
 import unidecode
 import yaml
@@ -64,13 +65,13 @@ def rename_spaces_to_underscores(path):
     print(f"Renamed '{path}' to '{new_name}'")
 
 
-def parse_markdown_to_dict(md_content):
+def parse_markdown_to_dict(md_content, filename):
     """
     Parse markdown content and return a dictionary with sections, paragraphs, and figures.
     """
     sections = {}
     current_section = ""
-    paragraph_index = 1
+    total_index = 0
     section_index = 0
 
     for line in md_content.split("\n\n"):
@@ -80,16 +81,43 @@ def parse_markdown_to_dict(md_content):
             continue
         elif line.startswith("#"):
             # New section
-            section_index += 1
             current_section = unidecode.unidecode(re.sub(r"#+\s*", "", line).strip())
             sections[f"{str(section_index).zfill(2)}_" + current_section] = []
+            section_index += 1
+            total_index += 1
         elif line.strip():
             if line.strip().startswith("!["):
                 # Figure found
                 alt_text, img_path = re.findall(r"\[([^]]+)\]\(([^)]+)\)", line)[0]
-                sections[f"{str(section_index).zfill(2)}_" + current_section].append(
-                    {"index": paragraph_index, "content": {"alt_text": alt_text, "path": img_path}}
+                sections[f"{str(section_index - 1).zfill(2)}_" + current_section].append(
+                    {"index": total_index, "content": {"alt_text": alt_text, "path": img_path}}
                 )
+
+                # save figures / move to correct folder
+                # if path ends with png, jpeg, jpg, or webp, split on . and take last
+                if img_path.endswith((".png", ".jpeg", ".jpg", ".webp", ".mp4")):
+                    img_type = img_path.split(".")[-1]  # one of png, jpg, jpeg, webp
+                # sometimes format=jpg or =png is included in the url, so split on = and take last
+                elif "format=jpg" in img_path or "format=png" in img_path:
+                    # split assuming it is the first = in the string
+                    img_type = "." + img_path.split("=")[-1][:3]
+                else:
+                    img_type = "png"
+
+                dir = os.path.dirname(filename)
+                # if img_path is url, download to img_{idx}.png with curl
+                if img_path.startswith("http"):
+                    # download image with correct type
+                    os.system(f"curl {img_path} -o {dir}/images/img_{total_index}.{img_type}")
+
+                # else move to args.input + gen-images as name img_{idx}.png
+                else:
+                    # extract path from filename
+                    os.system(f"cp {filename[:-3]}/{unquote(img_path)} {dir}/images/img_{total_index}.{img_type}")
+
+                # check that image exists, if not raise error
+                if not os.path.exists(f"{dir}/images/img_{total_index}.{img_type}"):
+                    raise FileNotFoundError(f"Image not found at {dir}/images/img_{total_index}.{img_type}")
             else:
                 # Regular paragraph
                 text = line.strip()
@@ -101,10 +129,10 @@ def parse_markdown_to_dict(md_content):
                     text = text[1:]
                 # remove the urls from text. It's in [xyz](www) format, extract xyz
                 text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
-                sections[f"{str(section_index).zfill(2)}_" + current_section].append(
-                    {"index": paragraph_index, "content": unidecode.unidecode(text)}
+                sections[f"{str(section_index - 1).zfill(2)}_" + current_section].append(
+                    {"index": total_index, "content": unidecode.unidecode(text)}
                 )
-            paragraph_index += 1
+            total_index += 1
 
     return sections
 
@@ -132,7 +160,7 @@ def markdown_to_yaml(md_filename, yaml_filename, date):
     md_content = read_markdown_file(md_filename)
     # print total number of characters in md_content
     print(f"INFO: Total number of characters in markdown file: {len(md_content)}")
-    sections_dict = parse_markdown_to_dict(md_content)
+    sections_dict = parse_markdown_to_dict(md_content, md_filename)
 
     # add markdown filename to dictionary
     sections_dict["md"] = md_filename

@@ -4,6 +4,8 @@ import argparse
 import os
 
 import cv2
+import moviepy.editor as mp
+import numpy as np
 import yaml
 from moviepy.editor import (
     AudioFileClip,
@@ -11,11 +13,9 @@ from moviepy.editor import (
     VideoFileClip,
     concatenate_videoclips,
 )
-import moviepy.editor as mp
-
-from pydub import AudioSegment
 from PIL import Image
-import numpy as np
+from pydub import AudioSegment
+
 
 def get_cumulative_length(file_list, offset: float = 0.0):
     cumulative_length = 0
@@ -179,7 +179,7 @@ def images_to_video(directory, skip=False, use_music=False, m_file=None):
 
     # Now, resized_images contains all your frames with uniform dimensions
     all_images = resized_images
- 
+
     # load audio
     audio_clip = AudioFileClip(audio_file)
     # audio_duration = audio_clip.duration
