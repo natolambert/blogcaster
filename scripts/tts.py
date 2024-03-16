@@ -201,7 +201,7 @@ if __name__ == "__main__":
         "model_id": "eleven_turbo_v2",
         "voice_settings": {
             "similarity_boost": 0.6,
-            "stability": 0.4,
+            "stability": 0.45,
         },
     }
     if args.boost > 0:
@@ -219,6 +219,7 @@ if __name__ == "__main__":
         }
     else:
         payload_quote = payload
+        url_newsread = url_nathan
 
     # create dir audio at args.input + audio
     audio_dir = args.input + "audio"
@@ -260,7 +261,8 @@ if __name__ == "__main__":
                 first_gen = False
             else:
                 # articial pause
-                heading = 'Section: ' + heading
+                # heading = '- -' + heading
+                pass
 
             payload["text"] = heading
             # generate audio for heading
