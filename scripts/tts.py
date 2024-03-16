@@ -279,6 +279,10 @@ if __name__ == "__main__":
 
             # if para is dict, prepare special audio to indicate figure
             if isinstance(para["content"], dict):
+                # check if dir source/repeat/ exists, if not create it
+                if not os.path.exists("source/repeat"):
+                    os.makedirs("source/repeat")
+                    
                 fig_count_str = str(fig_count).zfill(2)
                 # check if file source/repeat/figure_{fig_count_str}.mp3 exists,
                 # if so copy it to audio_dir with naming scheme
