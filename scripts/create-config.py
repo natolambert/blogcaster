@@ -96,7 +96,7 @@ def parse_markdown_to_dict(md_content):
                 text = text.replace("\u2019", "'")
                 # remove :, -, and leading space from text
                 text = text.replace(":", "")
-                text = text.replace("-", "")
+                text = text.replace("-", " ")
                 if text.startswith(" "):
                     text = text[1:]
                 # remove the urls from text. It's in [xyz](www) format, extract xyz

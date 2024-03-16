@@ -201,7 +201,7 @@ if __name__ == "__main__":
         "model_id": "eleven_turbo_v2",
         "voice_settings": {
             "similarity_boost": 0.6,
-            "stability": 0.4,
+            "stability": 0.45,
         },
     }
     if args.boost > 0:
@@ -219,6 +219,7 @@ if __name__ == "__main__":
         }
     else:
         payload_quote = payload
+        url_newsread = url_nathan
 
     # create dir audio at args.input + audio
     audio_dir = args.input + "audio"
@@ -260,7 +261,8 @@ if __name__ == "__main__":
                 first_gen = False
             else:
                 # articial pause
-                heading = 'Section: ' + heading
+                # heading = '- -' + heading
+                pass
 
             payload["text"] = heading
             # generate audio for heading
@@ -277,6 +279,10 @@ if __name__ == "__main__":
 
             # if para is dict, prepare special audio to indicate figure
             if isinstance(para["content"], dict):
+                # check if dir source/repeat/ exists, if not create it
+                if not os.path.exists("source/repeat"):
+                    os.makedirs("source/repeat")
+                    
                 fig_count_str = str(fig_count).zfill(2)
                 # check if file source/repeat/figure_{fig_count_str}.mp3 exists,
                 # if so copy it to audio_dir with naming scheme
