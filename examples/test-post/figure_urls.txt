@@ -1,0 +1,2 @@
+Fig 1: https://huggingface.co/datasets/natolambert/interconnects-figures/resolve/main/test-post/img_003.png
+Fig 2: https://huggingface.co/datasets/natolambert/interconnects-figures/resolve/main/test-post/img_010.jpg

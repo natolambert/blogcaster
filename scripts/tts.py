@@ -14,6 +14,23 @@ from pydub import AudioSegment
 from tqdm import tqdm
 
 
+def is_ffmpeg_normalize_runnable():
+    # Check operating system
+    if os.name == "posix":  # Unix-like OS
+        cmd = ["which", "ffmpeg-normalize"]
+    elif os.name == "nt":  # Windows
+        cmd = ["where", "ffmpeg-normalize"]
+    else:
+        return False  # Unsupported OS
+
+    try:
+        # Run the command
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        return True  # Command succeeded
+    except subprocess.CalledProcessError:
+        return False  # Command failed
+
+
 def strip_title(string):
     """
     Config entry, as dicts, keep track of titles as N_title goes here.
@@ -127,7 +144,6 @@ def request_audio(url, payload, headers, querystring, filename, per_sentence=Fal
         except Exception as e:
             print(f"Error: {e}")
 
-
         # boost volume if included with ffmpeg
         if audio_boost > 0:
             print(f"-> boosting audio file {filename}")
@@ -159,10 +175,15 @@ if __name__ == "__main__":
     parser.add_argument("--elelabs_voice_alt", type=str, default="nH0VmfcJAjdwUZ3yUYTf", help="11labs voice id")
     parser.add_argument("--start_heading", type=str, default="", help="start at section named in generation")
     parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
-    parser.add_argument("--ignore_title", action="store_true", default=False, help="ignore title and date in config (for research video example)")
+    parser.add_argument(
+        "--ignore_title",
+        action="store_true",
+        default=False,
+        help="ignore title and date in config (for research video example)",
+    )
     parser.add_argument("--per_sentence", action="store_true", default=False, help="generate audio per sentence")
     parser.add_argument("--section_music", action="store_true", default=False, help="use section music")
-    parser.add_argument("--use_quote_voice", action="store_true", default=False, help="use quote voice" )
+    parser.add_argument("--use_quote_voice", action="store_true", default=False, help="use quote voice")
     parser.add_argument(
         "--boost", type=float, default=0.0, help="audio boost for quiet 11labs voices (core voice only, not quotes)"
     )
@@ -234,8 +255,8 @@ if __name__ == "__main__":
     section_audios = []
 
     # iterate over config file that contains headings, text, and figures
-    for idx, (heading, content) in tqdm(enumerate(config.items())):
-        i = str(idx).zfill(2)
+    for sec_idx, (heading, content) in tqdm(enumerate(config.items())):
+        i = str(sec_idx).zfill(2)
         if heading in ["md", "date"]:
             continue
 
@@ -244,7 +265,7 @@ if __name__ == "__main__":
             print(f"Generating audio for section {i}, {heading}")
             if len(args.start_heading) > 0:
                 if heading == args.start_heading or skip_found:
-                    if idx > 0:
+                    if sec_idx > 0:
                         first_gen = False
                     skip_found = True
                     pass
@@ -258,8 +279,9 @@ if __name__ == "__main__":
 
             if first_gen:
                 # generate audio file for Title + date
-                heading = heading + " was published on " + config["date"] + "."
-                first_gen = False
+                if config["date"] is not None:
+                    heading = heading + " was published on " + config["date"] + "."
+                    first_gen = False
             else:
                 # articial pause
                 # heading = '- -' + heading
@@ -443,26 +465,27 @@ if __name__ == "__main__":
     # TODO remove all acronyms and other filtering, some that are bad are SOTA and MoE
     # TODO add seperate voice for quotes / quote detection
     # normalize audio file
-    filename = audio_dir + "/" + args.output + ".mp3"
-    print(f"-> normalizing audio file {filename}")
-    # default bitrate 128K and sample rate 44100 for 11labs
-    subprocess.run(
-        [
-            "ffmpeg-normalize",
-            filename,
-            "-o",
-            filename,
-            "-f",
-            "-c:a",
-            "libmp3lame",
-            "-b:a",
-            "128K",
-            "-ar",
-            "44100",
-            "--target-level",
-            "-20", # in DB, normally before was about -24
-        ]
-    )
+    if is_ffmpeg_normalize_runnable():
+        filename = audio_dir + "/" + args.output + ".mp3"
+        print(f"-> normalizing audio file {filename}")
+        # default bitrate 128K and sample rate 44100 for 11labs
+        subprocess.run(
+            [
+                "ffmpeg-normalize",
+                filename,
+                "-o",
+                filename,
+                "-f",
+                "-c:a",
+                "libmp3lame",
+                "-b:a",
+                "128K",
+                "-ar",
+                "44100",
+                "--target-level",
+                "-20",  # in DB, normally before was about -24
+            ]
+        )
 
     # if _sec_ in file in audio_files_short, remove it
     audio_files_short = [f for f in audio_files_short if "_sec_" not in f]
@@ -492,18 +515,22 @@ if __name__ == "__main__":
     section_lens = [get_cumulative_length(list_l, offset=offset) for list_l in files_list_of_lists]
     total_len = sum(section_lens)
 
-    print(f"Cumulative length of all audio files: {section_lens} seconds")
     print("----------------------------------")
-    print("Printing chapter times:")
+    print(f"Cumulative length of all audio files: {section_lens} seconds")
+    print(f"Saving show notes to {args.input}notes.txt")
     print("----------------------------------")
 
-    print(section_titles[0])
-    print(next(iter(config.values()))[0]["content"])
-    print("This is AI generated audio with Python and 11Labs. Music generated by Meta's MusicGen.")
-    print("Source code: https://github.com/natolambert/interconnects-tools")
-    print("Original post: TODO")
-    print()
-    cur_len = 0
-    for section_title, section_len in zip(section_titles, section_lens):
-        print(f"{print_if_hour(floor(cur_len), total_len)} {section_title}")
-        cur_len += section_len
+    with open(args.input + "notes.txt", "w") as file:
+        # Writing the first section title and the first config content
+        file.write(section_titles[0] + "\n")
+        file.write(next(iter(config.values()))[0]["content"] + "\n")
+        file.write("This is AI generated audio with Python and 11Labs. Music generated by Meta's MusicGen.\n")
+        file.write("Source code: https://github.com/natolambert/interconnects-tools\n")
+        file.write("Original post: TODO\n")
+        file.write("\n")
+
+        cur_len = 0
+        for section_title, section_lens in zip(section_titles, section_lens):
+            # Assuming print_if_hour is a function you've defined elsewhere
+            file.write(f"{print_if_hour(floor(cur_len), total_len)} {section_title}\n")
+            cur_len += section_lens
