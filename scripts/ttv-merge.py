@@ -4,8 +4,6 @@ import argparse
 import os
 
 import cv2
-import moviepy.editor as mp
-import numpy as np
 import yaml
 from moviepy.editor import (
     AudioFileClip,
@@ -13,7 +11,6 @@ from moviepy.editor import (
     VideoFileClip,
     concatenate_videoclips,
 )
-from PIL import Image
 from pydub import AudioSegment
 
 

@@ -7,6 +7,7 @@ from urllib.parse import unquote
 
 import unidecode
 import yaml
+from huggingface_hub import HfApi
 
 
 # create argparse function that takes in a directory (for later creating a yml file)
@@ -16,6 +17,10 @@ def get_args():
     parser.add_argument("directory", type=str, help="input directory path")
     # add date to be published
     parser.add_argument("--date", type=str, help="date to be published")
+    parser.add_argument(
+        "--hf_fig_dir", type=str, default="natolambert/interconnects-figures", help="directory with images for figures"
+    )
+    parser.add_argument("--use_imgur", action="store_true", default=False, help="use imgur to upload images")
     args = parser.parse_args()
     return args
 
@@ -73,6 +78,7 @@ def parse_markdown_to_dict(md_content, filename):
     current_section = ""
     total_index = 0
     section_index = 0
+    fig_indices = []
 
     for line in md_content.split("\n\n"):
         if line.startswith("---"):
@@ -100,7 +106,7 @@ def parse_markdown_to_dict(md_content, filename):
                 # sometimes format=jpg or =png is included in the url, so split on = and take last
                 elif "format=jpg" in img_path or "format=png" in img_path:
                     # split assuming it is the first = in the string
-                    img_type = "." + img_path.split("=")[-1][:3]
+                    img_type = img_path.split("=")[-1][:3]
                 else:
                     img_type = "png"
 
@@ -108,16 +114,20 @@ def parse_markdown_to_dict(md_content, filename):
                 # if img_path is url, download to img_{idx}.png with curl
                 if img_path.startswith("http"):
                     # download image with correct type
-                    os.system(f"curl {img_path} -o {dir}/images/img_{total_index}.{img_type}")
+                    os.system(f"curl {img_path} -o {dir}/images/img_{str(total_index).zfill(3)}.{img_type}")
 
-                # else move to args.input + gen-images as name img_{idx}.png
+                # else move to args.directory + gen-images as name img_{idx}.png
                 else:
                     # extract path from filename
-                    os.system(f"cp {filename[:-3]}/{unquote(img_path)} {dir}/images/img_{total_index}.{img_type}")
+                    # import ipdb; ipdb.set_trace()
+                    os.system(f"cp {unquote(img_path)} {dir}/images/img_{str(total_index).zfill(3)}.{img_type}")
 
                 # check that image exists, if not raise error
-                if not os.path.exists(f"{dir}/images/img_{total_index}.{img_type}"):
-                    raise FileNotFoundError(f"Image not found at {dir}/images/img_{total_index}.{img_type}")
+                if not os.path.exists(f"{dir}/images/img_{str(total_index).zfill(3)}.{img_type}"):
+                    raise FileNotFoundError(
+                        f"Image not found at {dir} /images/img_{str(total_index).zfill(3)}.{img_type}"
+                    )
+                fig_indices.append(total_index)
             else:
                 # Regular paragraph
                 text = line.strip()
@@ -168,16 +178,70 @@ def markdown_to_yaml(md_filename, yaml_filename, date):
     write_yaml_file(sections_dict, yaml_filename)
 
 
+# def upload_images_imgur(directory_path, client_id):
+#     headers = {"Authorization": f"Client-ID {client_id}"}
+#     url = "https://api.imgur.com/3/upload"
+#     uploaded_images_urls = []
+
+#     for image_name in os.listdir(directory_path):
+#         if image_name.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".bmp")):
+#             image_path = os.path.join(directory_path, image_name)
+#             with open(image_path, "rb") as image:
+#                 payload = {"image": image}
+#                 response = requests.post(url, headers=headers, files=payload)
+#                 if response.status_code == 200:
+#                     image_url = response.json()["data"]["link"]
+#                     print(f"Image {image_name} uploaded successfully: {image_url}")
+#                     uploaded_images_urls.append(image_url)
+#                 else:
+#                     print(f"Failed to upload image {image_name}. Status code: {response.status_code}")
+
+#     return uploaded_images_urls
+
+
 if __name__ == "__main__":
     args = get_args()
     markdown_file, images_dir, figures_directory = find_markdown_and_directories(args.directory)
-    # replace files and folders containing spaces with _ (in the OS)
-    # rename_spaces_to_underscores(markdown_file)
-    # rename_spaces_to_underscores(images_dir)
-    # rename_spaces_to_underscores(figures_directory)
 
     markdown_to_yaml(args.directory + markdown_file, args.directory + "config.yml", args.date)
 
-    # TODO read quotes and add to config.yml
-
     print(f"INFO: Created post config file at {args.directory + 'config.yml'}")
+
+    path = args.directory + "images/"
+    # if any images in path, execute
+    if os.path.exists(path) and len(os.listdir(path)) > 0:
+        # upload figures via huggingface
+        if not args.use_imgur:
+            # get hf token from HF_TOKEN
+            HF_TOKEN = os.environ["HF_TOKEN"]
+            api = HfApi(token=HF_TOKEN)
+
+            # path is input + images/
+            # repo_path is just the post name (what follows source in input path, after / )
+            # repo_id is hf_dataset
+
+            repo_path = args.directory.split("/")[-2]
+            api.upload_folder(
+                folder_path=path,
+                path_in_repo=repo_path,
+                repo_id=args.hf_fig_dir,
+                repo_type="dataset",
+            )
+
+            img_urls = []
+            for i, fig in enumerate(sorted(os.listdir(path))):
+                # only print if corresponding index in prompts is None
+                # strip number from last three digists img_NNN.png -> NNN
+                fig_idx = int(fig.split("_")[-1].split(".")[0])
+                img_urls.append(f"https://huggingface.co/datasets/{args.hf_fig_dir}/resolve/main/{repo_path}/{fig}")
+
+        # leaving this commented if someone wants to give me a tutorial on using their API
+        # else:  # upload via imgur
+        #     img_urls = upload_images_imgur(args.directory + "images/")
+
+        # Save URLs to a text file
+        with open(args.directory + "figure_urls.txt", "w") as file:
+            for i, url in enumerate(img_urls):
+                file.write(f"Fig {i+1}: " + url + "\n")
+
+        print(f"All image URLs have been saved to {args.directory}figure_urls.txt")
