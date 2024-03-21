@@ -17,7 +17,7 @@ SYSTEM_PROMPT = (
 )
 
 SYSTEM_PROMPT_STLYE = (
-    "Please draw a diagram to accompany this summary or short snippet from a blog post."
+    "Please draw art, or an artistic diagram, to accompany this summary or short snippet from a blog post."
     "It needs a white background with sky blue coloring (some light grey) "
     "and be in the style of 3blue1brown videos and and famous drawings. A little flashy. "
     "It's about AI, visualize intelligence, feedback, and something people will like. \n\n"

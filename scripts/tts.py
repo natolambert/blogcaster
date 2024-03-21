@@ -50,6 +50,7 @@ def request_audio(url, payload, headers, querystring, filename, per_sentence=Fal
     payload["text"] = payload["text"].replace("\n", " ")
     payload["text"] = payload["text"].replace(">", "")
     payload["text"] = payload["text"].replace("**", "")
+    payload["text"] = payload["text"].replace("*", "") # italics wasn't being handled correctly :/
     payload["text"] = payload["text"].replace(" | ", " ")
 
     # remove weird slashes
