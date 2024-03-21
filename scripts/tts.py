@@ -14,6 +14,23 @@ from pydub import AudioSegment
 from tqdm import tqdm
 
 
+def is_ffmpeg_normalize_runnable():
+    # Check operating system
+    if os.name == "posix":  # Unix-like OS
+        cmd = ["which", "ffmpeg-normalize"]
+    elif os.name == "nt":  # Windows
+        cmd = ["where", "ffmpeg-normalize"]
+    else:
+        return False  # Unsupported OS
+
+    try:
+        # Run the command
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        return True  # Command succeeded
+    except subprocess.CalledProcessError:
+        return False  # Command failed
+
+
 def strip_title(string):
     """
     Config entry, as dicts, keep track of titles as N_title goes here.
@@ -260,8 +277,9 @@ if __name__ == "__main__":
 
             if first_gen:
                 # generate audio file for Title + date
-                heading = heading + " was published on " + config["date"] + "."
-                first_gen = False
+                if config["date"] is not None:
+                    heading = heading + " was published on " + config["date"] + "."
+                    first_gen = False
             else:
                 # articial pause
                 heading = "Section: " + heading
@@ -440,26 +458,27 @@ if __name__ == "__main__":
     # TODO remove all acronyms and other filtering, some that are bad are SOTA and MoE
     # TODO add seperate voice for quotes / quote detection
     # normalize audio file
-    filename = audio_dir + "/" + args.output + ".mp3"
-    print(f"-> normalizing audio file {filename}")
-    # default bitrate 128K and sample rate 44100 for 11labs
-    subprocess.run(
-        [
-            "ffmpeg-normalize",
-            filename,
-            "-o",
-            filename,
-            "-f",
-            "-c:a",
-            "libmp3lame",
-            "-b:a",
-            "128K",
-            "-ar",
-            "44100",
-            "--target-level",
-            "-20",  # in DB, normally before was about -24
-        ]
-    )
+    if is_ffmpeg_normalize_runnable():
+        filename = audio_dir + "/" + args.output + ".mp3"
+        print(f"-> normalizing audio file {filename}")
+        # default bitrate 128K and sample rate 44100 for 11labs
+        subprocess.run(
+            [
+                "ffmpeg-normalize",
+                filename,
+                "-o",
+                filename,
+                "-f",
+                "-c:a",
+                "libmp3lame",
+                "-b:a",
+                "128K",
+                "-ar",
+                "44100",
+                "--target-level",
+                "-20",  # in DB, normally before was about -24
+            ]
+        )
 
     # if _sec_ in file in audio_files_short, remove it
     audio_files_short = [f for f in audio_files_short if "_sec_" not in f]
@@ -489,9 +508,9 @@ if __name__ == "__main__":
     section_lens = [get_cumulative_length(list_l, offset=offset) for list_l in files_list_of_lists]
     total_len = sum(section_lens)
 
-    print(f"Cumulative length of all audio files: {section_lens} seconds")
     print("----------------------------------")
-    print("Saving show notes:")
+    print(f"Cumulative length of all audio files: {section_lens} seconds")
+    print(f"Saving show notes to {args.input}notes.txt")
     print("----------------------------------")
 
     with open(args.input + "notes.txt", "w") as file:
