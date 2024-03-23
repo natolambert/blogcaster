@@ -11,6 +11,7 @@ coverage==5.5
 decorator==4.4.2
 deprecation==2.1.0
 distro==1.8.0
+# elevenlabs>=1.0.0
 exceptiongroup==1.2.0
 executing==2.0.1
 eyed3==0.9.7

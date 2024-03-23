@@ -13,6 +13,15 @@ import yaml
 from pydub import AudioSegment
 from tqdm import tqdm
 
+# todo implement elevenlabs
+# from elevenlabs import save, generate
+# from elevenlabs.client import ElevenLabs
+# ELE_TOKEN = os.environ["ELELABS_API_KEY"]
+# client = ElevenLabs(
+#   api_key=ELE_TOKEN, # Defaults to ELEVEN_API_KEY
+# )
+# client.generate
+
 
 def is_ffmpeg_normalize_runnable():
     # Check operating system
@@ -53,6 +62,8 @@ def get_cumulative_length(file_list, offset: float = 0.0):
 
     return cumulative_length / 1000.0  # Convert to seconds
 
+def get_11labs_audio(url, payload, headers, querystring, filename, per_sentence=False):
+    pass
 
 def request_audio(url, payload, headers, querystring, filename, per_sentence=False):
     """
@@ -63,7 +74,7 @@ def request_audio(url, payload, headers, querystring, filename, per_sentence=Fal
             if chunk:
                 part_file.write(chunk)
     """
-
+    
     # check if audio_boost in payload, if so remove it and grab the variable
     if "audio_boost" in payload:
         audio_boost = payload["audio_boost"]
@@ -126,9 +137,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, required=True, help="input directory to work with")
     parser.add_argument("--output", type=str, default="generated_audio", help="output mp3 file path")
-    parser.add_argument(
-        "--elelabs_voice", type=str, default="kR0divO0lqMjNIyZ85Am", help="11labs voice id"
-    )  # previous version WerIBRrBvioo2do7d1qq
+    parser.add_argument("--elelabs_voice", type=str, default="kR0divO0lqMjNIyZ85Am", help="11labs voice id") # previous version WerIBRrBvioo2do7d1qq
     parser.add_argument("--elelabs_voice_alt", type=str, default="nH0VmfcJAjdwUZ3yUYTf", help="11labs voice id")
     parser.add_argument("--start_heading", type=str, default="", help="start at section named in generation")
     parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
@@ -262,7 +271,7 @@ if __name__ == "__main__":
                 # check if dir source/repeat/ exists, if not create it
                 if not os.path.exists("source/repeat"):
                     os.makedirs("source/repeat")
-
+                    
                 fig_count_str = str(fig_count).zfill(2)
                 # check if file source/repeat/figure_{fig_count_str}.mp3 exists,
                 # if so copy it to audio_dir with naming scheme
