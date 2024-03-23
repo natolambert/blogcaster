@@ -94,18 +94,24 @@ def request_audio(url, payload, headers, querystring, filename, per_sentence=Fal
                                 sentence = sentence[1:]
                             payload["text"] = sentence + "."  # add period back
                             print("-> audio request send to 11labs")
-                            response = requests.post(url, json=payload, headers=headers, params=querystring)
-                            for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                                if chunk:
-                                    part_file.write(chunk)
+                            try:
+                                response = requests.post(url, json=payload, headers=headers, params=querystring)
+                                for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                                    if chunk:
+                                        part_file.write(chunk)
+                            except Exception as e:
+                                print(f"Error: {e}")
             else:
                 print("-> audio request send to 11labs")
                 payload["text"] = full_text
-                response = requests.post(url, json=payload, headers=headers, params=querystring)
-                with open(filename, "wb") as part_file:
-                    for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                        if chunk:
-                            part_file.write(chunk)
+                try:
+                    response = requests.post(url, json=payload, headers=headers, params=querystring)
+                    with open(filename, "wb") as part_file:
+                        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                            if chunk:
+                                part_file.write(chunk)
+                except Exception as e:
+                    print(f"Error: {e}")
 
         except Exception as e:
             print(f"Error: {e}")
