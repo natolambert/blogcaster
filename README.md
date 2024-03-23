@@ -1,4 +1,4 @@
-# Interconnects Tools for Multimodal Blogging!
+# BlogCast: Tools for Multimodal Blogging!
 
 Watch an example video [here](https://www.youtube.com/watch?v=0i0aBJGgtpk)!
 
@@ -23,7 +23,7 @@ My API key in the git history is no longer valid, of course.
 ## Installation
 Right now this is not on pypi, run as following:
 ```
-git clone https://github.com/natolambert/interconnects-tools
+git clone https://github.com/natolambert/blogcaster
 cd interconnects-tools
 ```
 Install from `requirements.txt`
