@@ -9,6 +9,49 @@ import unidecode
 import yaml
 from huggingface_hub import HfApi
 
+AUDIO_FIXES = {
+    "\n": " ",
+    ">": "",
+    "**": "",
+    "*": "",
+    " | ": " ",
+    "\\ ": " ",
+    "e.g.": "e g",
+    "i.e.": "i e",
+    "w.r.t.": "with respect to",
+    '."': '".',
+    "3.5": "3 point 5",
+    "4.5": "4 point 5",
+    "LLaVA": "llava",
+    "do-or-die": "do or die",
+    "LLM-as-a-judge": "LLM as a judge",
+    " (RLHF)": "",
+    "Jan.": "January",
+    "Feb.": "February",
+    "Mar.": "March",
+    "Apr.": "April",
+    "Jun.": "June",
+    "Jul.": "July",
+    "Aug.": "August",
+    "Sep.": "September",
+    "Sept.": "September",
+    "Oct.": "October",
+    "Nov.": "November",
+    "Dec.": "December",
+    "Anon. ": "Anonymous ",
+    "readme": "read me",  # for discussing code
+    "README": "read me",
+    # "Arxiv ": "Archive ",
+    # "arxiv ": "Archive ",
+    # "arXiv ": "Archive "
+}
+
+
+def replace_all(text):
+    for old, new in AUDIO_FIXES.items():
+        text = text.replace(old, new)
+    return text
+
 
 # create argparse function that takes in a directory (for later creating a yml file)
 def get_args():
@@ -142,6 +185,10 @@ def parse_markdown_to_dict(md_content, filename):
                 sections[f"{str(section_index - 1).zfill(2)}_" + current_section].append(
                     {"index": total_index, "content": unidecode.unidecode(text)}
                 )
+
+                # nit fixes for audio generation
+                text = replace_all(text)
+
             total_index += 1
 
     return sections

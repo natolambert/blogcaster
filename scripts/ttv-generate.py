@@ -20,9 +20,8 @@ SYSTEM_PROMPT_STLYE = (
     "It needs a white background with sky blue coloring (some light grey) "
     "and be in the style of 3blue1brown videos and and famous drawings. A little flashy. "
     "It's about AI, visualize intelligence, feedback, and something people will like. \n\n"
-    # "Shapes are good, but not too much text. Slight hint of a hand drawn image. "
-    # "Just the artistic image with a good amount of detail. \n\n"
 )
+
 # from OpenAI docs
 # https://platform.openai.com/docs/guides/images/usage?context=node
 REWRITE_OVERRIDE = (
@@ -39,7 +38,10 @@ def summarize_text(text):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "Summarize content you are provided in two or three descriptive sentences that will be used to prompt DALLE 3."},
+            {
+                "role": "system",
+                "content": "Summarize content you are provided in two or three descriptive sentences that will be used to prompt DALLE 3.", # noqa
+            },
             {"role": "user", "content": text},
         ],
         temperature=0.7,

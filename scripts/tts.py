@@ -63,51 +63,6 @@ def request_audio(url, payload, headers, querystring, filename, per_sentence=Fal
             if chunk:
                 part_file.write(chunk)
     """
-    # remove \n and > from payload text, and others
-    payload["text"] = payload["text"].replace("\n", " ")
-    payload["text"] = payload["text"].replace(">", "")
-    payload["text"] = payload["text"].replace("**", "")
-    payload["text"] = payload["text"].replace("*", "") # italics wasn't being handled correctly :/
-    payload["text"] = payload["text"].replace(" | ", " ")
-
-    # remove weird slashes
-    payload["text"] = payload["text"].replace("\\ ", " ")
-
-    # acronyms
-    payload["text"] = payload["text"].replace("e.g.", "e g")
-    payload["text"] = payload["text"].replace("i.e.", "i e")
-    payload["text"] = payload["text"].replace("w.r.t.", "with respect to")
-    # move quotes inside periods for better processing
-    payload["text"] = payload["text"].replace('."', '".')
-    # model names
-    payload["text"] = payload["text"].replace("3.5", "3 point 5")
-    payload["text"] = payload["text"].replace("4.5", "4 point 5")
-    payload["text"] = payload["text"].replace("LLaVA", "llava")
-    # some errors with dashes
-    payload["text"] = payload["text"].replace("do-or-die", "do or die")
-    payload["text"] = payload["text"].replace("LLM-as-a-judge", "LLM as a judge")
-    # remove tricky () things, e.g. (RLHF)
-    payload["text"] = payload["text"].replace(" (RLHF)", "")
-
-    # replace month abbreviations mar -> march etc
-    payload["text"] = payload["text"].replace("Jan.", "January")
-    payload["text"] = payload["text"].replace("Feb.", "February")
-    payload["text"] = payload["text"].replace("Mar.", "March")
-    payload["text"] = payload["text"].replace("Apr.", "April")
-    payload["text"] = payload["text"].replace("Jun.", "June")
-    payload["text"] = payload["text"].replace("Jul.", "July")
-    payload["text"] = payload["text"].replace("Aug.", "August")
-    payload["text"] = payload["text"].replace("Sep.", "September")
-    payload["text"] = payload["text"].replace("Sept.", "September")
-    payload["text"] = payload["text"].replace("Oct.", "October")
-    payload["text"] = payload["text"].replace("Nov.", "November")
-    payload["text"] = payload["text"].replace("Dec.", "December")
-
-    payload["text"] = payload["text"].replace("Anon. ", "Anonymous ")
-    payload["text"] = payload["text"].replace("Arxiv ", "Archive ")
-    payload["text"] = payload["text"].replace("arxiv ", "Archive ")
-    payload["text"] = payload["text"].replace("arXiv ", "Archive ")
-    # TODO: ready-to-use, DALLE to DALL E
 
     # check if audio_boost in payload, if so remove it and grab the variable
     if "audio_boost" in payload:
@@ -171,7 +126,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, required=True, help="input directory to work with")
     parser.add_argument("--output", type=str, default="generated_audio", help="output mp3 file path")
-    parser.add_argument("--elelabs_voice", type=str, default="WerIBRrBvioo2do7d1qq", help="11labs voice id")
+    parser.add_argument(
+        "--elelabs_voice", type=str, default="kR0divO0lqMjNIyZ85Am", help="11labs voice id"
+    )  # previous version WerIBRrBvioo2do7d1qq
     parser.add_argument("--elelabs_voice_alt", type=str, default="nH0VmfcJAjdwUZ3yUYTf", help="11labs voice id")
     parser.add_argument("--start_heading", type=str, default="", help="start at section named in generation")
     parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
@@ -305,7 +262,7 @@ if __name__ == "__main__":
                 # check if dir source/repeat/ exists, if not create it
                 if not os.path.exists("source/repeat"):
                     os.makedirs("source/repeat")
-                    
+
                 fig_count_str = str(fig_count).zfill(2)
                 # check if file source/repeat/figure_{fig_count_str}.mp3 exists,
                 # if so copy it to audio_dir with naming scheme
