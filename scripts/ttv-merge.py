@@ -230,10 +230,6 @@ def images_to_video(directory, skip=False, use_music=False, m_file=None):
                 )
             video_clips[i] = clip
 
-        # for video clips, print the size
-        # for clip in video_clips:
-        #     print(clip.size)
-
         # process audio_durations and is_video to figure out insert_time for each video
         insert_times = []
         offset = 0  # offset the insert time based on cumualtive length of added videos

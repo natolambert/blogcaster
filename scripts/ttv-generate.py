@@ -40,7 +40,7 @@ def summarize_text(text):
         messages=[
             {
                 "role": "system",
-                "content": "Summarize content you are provided in two or three descriptive sentences that will be used to prompt DALLE 3.", # noqa
+                "content": "Summarize content you are provided in two or three descriptive sentences that will be used to prompt DALLE 3.",  # noqa
             },
             {"role": "user", "content": text},
         ],
@@ -81,9 +81,6 @@ def get_image(idx, inputs, vivid=True, hd=True, rewrite=True, no_sleep=False):
     elif len(string) < 50 and idx > 0:
         string += f"\n For context, the title of this post is {title}"
     prompt = SYSTEM_PROMPT_STLYE + string
-    # truncate too long of prompts (4000 is limit)
-    # if len(prompt) > 4000:
-    #     prompt = prompt[:4000]
 
     if not rewrite:
         prompt = REWRITE_OVERRIDE + prompt
@@ -98,7 +95,7 @@ def get_image(idx, inputs, vivid=True, hd=True, rewrite=True, no_sleep=False):
             style=style,  # vivid for more extreme
             n=1,
         )
-        # print(f'Response code: {response.status_code}')
+
         image_url = response.data[0].url
         image_response = requests.get(image_url)
 
@@ -149,7 +146,6 @@ if __name__ == "__main__":
             first_gen = False
 
         prompts.append(heading)
-        # TODO if prompt is less than a certain length, merge with previous?
 
         # iterate over list of dicts in content and
         for para in content:
