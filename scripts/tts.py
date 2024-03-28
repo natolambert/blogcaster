@@ -459,7 +459,7 @@ if __name__ == "__main__":
                 "-ar",
                 "44100",
                 "--target-level",
-                "-20",  # in DB, normally before was about -24
+                "-22",  # in DB, normally before was about -24
             ]
         )
 
