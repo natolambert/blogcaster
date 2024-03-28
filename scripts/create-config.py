@@ -163,12 +163,12 @@ def parse_markdown_to_dict(md_content, filename):
                 else:
                     # extract path from filename
                     # import ipdb; ipdb.set_trace()
-                    os.system(f"cp {unquote(img_path)} {dir}/images/img_{str(total_index).zfill(3)}.{img_type}")
+                    os.system(f"cp {dir}/{unquote(img_path)} {dir}/images/img_{str(total_index).zfill(3)}.{img_type}")
 
                 # check that image exists, if not raise error
                 if not os.path.exists(f"{dir}/images/img_{str(total_index).zfill(3)}.{img_type}"):
                     raise FileNotFoundError(
-                        f"Image not found at {dir} /images/img_{str(total_index).zfill(3)}.{img_type}"
+                        f"Image not found at {dir}/images/img_{str(total_index).zfill(3)}.{img_type}"
                     )
                 fig_indices.append(total_index)
             else:
@@ -183,11 +183,8 @@ def parse_markdown_to_dict(md_content, filename):
                 # remove the urls from text. It's in [xyz](www) format, extract xyz
                 text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
                 sections[f"{str(section_index - 1).zfill(2)}_" + current_section].append(
-                    {"index": total_index, "content": unidecode.unidecode(text)}
+                    {"index": total_index, "content": unidecode.unidecode(replace_all(text))}
                 )
-
-                # nit fixes for audio generation
-                text = replace_all(text)
 
             total_index += 1
 

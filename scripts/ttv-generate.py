@@ -116,7 +116,6 @@ if __name__ == "__main__":
     parser.add_argument("--input", type=str, required=True, help="input text file dir")
     parser.add_argument("--do_not_gen", action="store_true", default=False, help="only download images")
     args = parser.parse_args()
-    hf_dataset = args.hf_fig_dir
 
     # load yml file at args.input + config.yml
     with open(args.input + "config.yml", "r") as f:

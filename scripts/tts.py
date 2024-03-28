@@ -147,7 +147,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, default="generated_audio", help="output mp3 file path")
     parser.add_argument(
         "--elelabs_voice", type=str, default="kR0divO0lqMjNIyZ85Am", help="11labs voice id"
-    )  # previous version WerIBRrBvioo2do7d1qq
+    )  # previous version WerIBRrBvioo2do7d1qq, profession clone kR0divO0lqMjNIyZ85Am
     parser.add_argument("--elelabs_voice_alt", type=str, default="nH0VmfcJAjdwUZ3yUYTf", help="11labs voice id")
     parser.add_argument("--start_heading", type=str, default="", help="start at section named in generation")
     parser.add_argument("--farewell_audio", type=str, default="source/repeat/farewell.mp3", help="farewell audio path")
@@ -190,8 +190,8 @@ if __name__ == "__main__":
         # for quick fine-tunes
         # "model_id": "eleven_multilingual_v2",
         # "voice_settings": {
-        #     "similarity_boost": 0.75,
-        #     "stability": 0.45,
+        #     "similarity_boost": 0.725,
+        #     "stability": 0.53,
         #     "style": 0.05,
         #     "use_speaker_boost": True,
         # },
