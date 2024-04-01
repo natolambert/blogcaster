@@ -234,6 +234,9 @@ def parse_markdown_to_dict(md_content, filename):
                 if text.startswith(" "):
                     text = text[1:]
 
+                # Remove any () and everything inside them
+                text = re.sub(r"\([^)]*\)", "", text)
+
                 sections[f"{str(section_index - 1).zfill(2)}_" + current_section].append(
                     {"index": total_index, "content": unidecode.unidecode(replace_all(text))}
                 )
