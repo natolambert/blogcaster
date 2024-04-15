@@ -4,10 +4,19 @@ import argparse
 import os
 import re
 from urllib.parse import unquote
+from openai import OpenAI
 
 import unidecode
 import yaml
 from huggingface_hub import HfApi
+
+client = OpenAI()
+
+
+SYSTEM_PROMPT = (
+    "Please perform the following task: translate the input into written word so a text-to-speech model can read it (things like fractions don't work well).\n\n" # noqa
+    "Examples include 1/4 to one quarter, 20-30 to twenty to thirty, or $1.5m to one point five million dollars. Most dollar signs should be converted. When given a sentence, just replace those." # noqa
+)
 
 AUDIO_FIXES = {
     "\n": " ",
@@ -52,6 +61,41 @@ def replace_all(text):
         text = text.replace(old, new)
     return text
 
+def prep_for_tts(text):
+    """
+    Rephrases challenging formats for TTS models.
+
+    E.g. $1/4m -> one quarter million dollars
+
+    Logic will be to look for the following symbols in text: $, /, x, . (without a space after it)
+    Note: generate with 0 temperature for these :)
+    """
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT,
+            },
+            {"role": "user", "content": text},
+        ],
+        temperature=0.0,
+        max_tokens=64,
+        top_p=1,
+    )
+
+def contains_decimal_number(s):
+    # This regex pattern matches an optional sign (+ or -), followed by zero or more digits (\d*),
+    # a decimal point (\.), and one or more digits (\d+).
+    # The pattern also handles cases where there might be digits before the decimal point.
+    pattern = re.compile(r'-?\d*\.\d+')
+    return bool(pattern.search(s))
+
+def has_nx_pattern(s):
+    return bool(re.search(r'\d+(\.\d+)?x', s))
+
+def has_range_pattern(s):
+    return bool(re.search(r'\b\d+\s*-\s*\d+\b', s))
 
 # create argparse function that takes in a directory (for later creating a yml file)
 def get_args():
@@ -175,13 +219,24 @@ def parse_markdown_to_dict(md_content, filename):
                 # Regular paragraph
                 text = line.strip()
                 text = text.replace("\u2019", "'")
+
+                # remove the urls from text. It's in [xyz](www) format, extract xyz
+                text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+
+                # rephrase text for TTS if symbols are present
+                # if any of the following symbols are present in text, prep for TTS
+                if any(symbol in text for symbol in ["$", "/"]) or contains_decimal_number(text) or has_nx_pattern(text) or has_range_pattern(text):
+                    text = prep_for_tts(text)
+
                 # remove :, -, and leading space from text
                 text = text.replace(":", "")
                 text = text.replace("-", " ")
                 if text.startswith(" "):
                     text = text[1:]
-                # remove the urls from text. It's in [xyz](www) format, extract xyz
-                text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+
+                # Remove any () and everything inside them
+                text = re.sub(r"\([^)]*\)", "", text)
+
                 sections[f"{str(section_index - 1).zfill(2)}_" + current_section].append(
                     {"index": total_index, "content": unidecode.unidecode(replace_all(text))}
                 )
