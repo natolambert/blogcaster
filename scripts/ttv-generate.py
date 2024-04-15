@@ -16,8 +16,8 @@ SYSTEM_PROMPT = (
 )
 
 SYSTEM_PROMPT_STLYE = (
-    "Please draw art, or an artistic diagram, to accompany this summary or short snippet from a blog post."
-    "It needs a white background with sky blue coloring (some light grey) "
+    "Please draw art, or an artistic diagram, to accompany this summary or short snippet."
+    "Fill the entire image (no white space), white base, with sky blue coloring (some light grey) "
     "and be in the style of 3blue1brown videos and and famous drawings. A little flashy. "
     "It's about AI, visualize intelligence, feedback, and something people will like. \n\n"
 )
@@ -107,7 +107,7 @@ def get_image(idx, inputs, vivid=True, hd=True, rewrite=True, no_sleep=False):
         print(f"Idx: {idx}, Error: {e}")
 
     if not no_sleep:
-        time.sleep(25)  # 20/23 sec was rate limit erroring
+        time.sleep(20)  # 20/23 sec was rate limit erroring
 
 
 if __name__ == "__main__":

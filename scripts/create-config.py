@@ -31,9 +31,12 @@ AUDIO_FIXES = {
     '."': '".',
     "3.5": "3 point 5",
     "4.5": "4 point 5",
+    "8x22B": "8 by 22 B",
+    "8x7B": "8 by 7 B",
     "LLaVA": "llava",
     "do-or-die": "do or die",
     "LLM-as-a-judge": "LLM as a judge",
+    "LMSYS": "L M sys",
     " (RLHF)": "",
     "Jan.": "January",
     "Feb.": "February",
@@ -80,9 +83,10 @@ def prep_for_tts(text):
             {"role": "user", "content": text},
         ],
         temperature=0.0,
-        max_tokens=64,
+        max_tokens=256,
         top_p=1,
     )
+    return response.choices[0].message.content
 
 def contains_decimal_number(s):
     # This regex pattern matches an optional sign (+ or -), followed by zero or more digits (\d*),
@@ -222,11 +226,13 @@ def parse_markdown_to_dict(md_content, filename):
 
                 # remove the urls from text. It's in [xyz](www) format, extract xyz
                 text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+                text = replace_all(text)
 
                 # rephrase text for TTS if symbols are present
                 # if any of the following symbols are present in text, prep for TTS
                 if any(symbol in text for symbol in ["$", "/"]) or contains_decimal_number(text) or has_nx_pattern(text) or has_range_pattern(text):
                     text = prep_for_tts(text)
+                    print(f"Rewrote index {total_index} with AI for TTS formatting.")
 
                 # remove :, -, and leading space from text
                 text = text.replace(":", "")
@@ -234,11 +240,15 @@ def parse_markdown_to_dict(md_content, filename):
                 if text.startswith(" "):
                     text = text[1:]
 
+                if text.endswith(" ."):
+                    # change to period
+                    text = text[:-2] + "."
+
                 # Remove any () and everything inside them
                 text = re.sub(r"\([^)]*\)", "", text)
 
                 sections[f"{str(section_index - 1).zfill(2)}_" + current_section].append(
-                    {"index": total_index, "content": unidecode.unidecode(replace_all(text))}
+                    {"index": total_index, "content": unidecode.unidecode(text)}
                 )
 
             total_index += 1
