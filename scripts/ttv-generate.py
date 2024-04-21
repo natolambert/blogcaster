@@ -19,7 +19,7 @@ SYSTEM_PROMPT_STLYE = (
     "Please draw art, or an artistic diagram, to accompany this summary or short snippet."
     "Filled from edge to edge with vibrant art, white base, with sky blue coloring (some light grey) "
     "and be in the style of 3blue1brown videos and and famous drawings. A little flashy. "
-    "It's about AI, visualize intelligence, feedback, and the future. \n\n"
+    "It's about AI, so visualize intelligence, feedback, and the future. \n\n"
 )
 
 # from OpenAI docs
@@ -40,7 +40,7 @@ def summarize_text(text):
         messages=[
             {
                 "role": "system",
-                "content": "Summarize content you are provided in two or three descriptive sentences that will be used to prompt DALLE 3.",  # noqa
+                "content": "Summarize content you are provided in two descriptive sentences that will be used to effectively prompt DALLE 3 for text-to-image generation.",  # noqa
             },
             {"role": "user", "content": text},
         ],
