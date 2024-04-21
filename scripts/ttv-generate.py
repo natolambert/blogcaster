@@ -17,9 +17,9 @@ SYSTEM_PROMPT = (
 
 SYSTEM_PROMPT_STLYE = (
     "Please draw art, or an artistic diagram, to accompany this summary or short snippet."
-    "Fill the entire image (no white space), white base, with sky blue coloring (some light grey) "
+    "Filled from edge to edge with vibrant art, white base, with sky blue coloring (some light grey) "
     "and be in the style of 3blue1brown videos and and famous drawings. A little flashy. "
-    "It's about AI, visualize intelligence, feedback, and something people will like. \n\n"
+    "It's about AI, visualize intelligence, feedback, and the future. \n\n"
 )
 
 # from OpenAI docs
