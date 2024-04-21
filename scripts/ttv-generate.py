@@ -36,7 +36,7 @@ def summarize_text(text):
     Tool to mitigate randomness of generations. Used when text length > 250 characters.
     """
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4-turbo-2024-04-09",
         messages=[
             {
                 "role": "system",

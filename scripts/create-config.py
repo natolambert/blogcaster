@@ -23,6 +23,7 @@ AUDIO_FIXES = {
     ">": "",
     "**": "",
     "*": "",
+    "~": "approximately ", # for numbers
     " | ": " ",
     "\\ ": " ",
     "e.g.": "e g",
@@ -76,7 +77,7 @@ def prep_for_tts(text):
     Note: generate with 0 temperature for these :)
     """
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4-turbo-2024-04-09",
         messages=[
             {
                 "role": "system",
