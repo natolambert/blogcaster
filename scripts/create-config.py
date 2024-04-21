@@ -233,7 +233,7 @@ def parse_markdown_to_dict(md_content, filename):
                 # if text starts with >, remove it and add "Quote: " to the beginning and " End Quote." to the end
                 if text.startswith(">"):
                     text = text[1:]
-                    text = "Quote: " + text + " End Quote."
+                    text = "I quote: " + text + " End Quote."
 
                 # remove the urls from text. It's in [xyz](www) format, extract xyz
                 text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
