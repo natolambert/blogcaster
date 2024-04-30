@@ -34,6 +34,7 @@ AUDIO_FIXES = {
     "4.5": "4 point 5",
     "8x22B": "8 by 22 B",
     "8x7B": "8 by 7 B",
+    "MoE": "M O E",
     "LLaVA": "llava",
     "do-or-die": "do or die",
     "LLM-as-a-judge": "LLM as a judge",
@@ -55,6 +56,8 @@ AUDIO_FIXES = {
     "readme": "read me",  # for discussing code
     "README": "read me",
     "Q*": "Q star",
+    "MW": "mega watt",
+    "GW": "giga watt",
     # "Arxiv ": "Archive ",
     # "arxiv ": "Archive ",
     # "arXiv ": "Archive "
@@ -234,7 +237,7 @@ def parse_markdown_to_dict(md_content, filename):
                 # if text starts with >, remove it and add "Quote: " to the beginning and " End Quote." to the end
                 if text.startswith(">"):
                     text = text[1:]
-                    text = "I quote: " + text + " End Quote."
+                    text = "I quote:" + text + " End Quote."
 
                 # remove the urls from text. It's in [xyz](www) format, extract xyz
                 text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
@@ -252,10 +255,14 @@ def parse_markdown_to_dict(md_content, filename):
                     print(f"Rewrote index {total_index} with AI for TTS formatting.")
 
                 # remove :, -, and leading space from text
-                text = text.replace(":", "")
-                text = text.replace("-", " ")
+                text = text.replace(":", ",")
+                text = text.replace("--", ",") # simpler pause
                 if text.startswith(" "):
                     text = text[1:]
+
+                # if starts with '- ', remove it, from list
+                if text.startswith("- "):
+                    text = text[2:]
 
                 # change trailing space and period to just period
                 if text.endswith(" ."):
@@ -268,6 +275,9 @@ def parse_markdown_to_dict(md_content, filename):
 
                 # Remove any () and everything inside them
                 text = re.sub(r"\([^)]*\)", "", text)
+
+                # decode
+                text = unidecode.unidecode(text)
 
                 sections[f"{str(section_index - 1).zfill(2)}_" + current_section].append(
                     {"index": total_index, "content": unidecode.unidecode(text)}
