@@ -98,9 +98,14 @@ def request_audio(url, payload, headers, querystring, filename, per_sentence=Fal
                             print("-> audio request send to 11labs")
                             try:
                                 response = requests.post(url, json=payload, headers=headers, params=querystring)
-                                for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                                    if chunk:
-                                        part_file.write(chunk)
+                                if response.ok:
+                                    for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                                        if chunk:
+                                            part_file.write(chunk)
+                                    print("Audio stream saved successfully.")
+                                else:
+                                    # Print the error message if the request was not successful
+                                    print(response.text)
                             except Exception as e:
                                 print(f"Error: {e}")
             else:
@@ -108,10 +113,15 @@ def request_audio(url, payload, headers, querystring, filename, per_sentence=Fal
                 payload["text"] = full_text
                 try:
                     response = requests.post(url, json=payload, headers=headers, params=querystring)
-                    with open(filename, "wb") as part_file:
-                        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                            if chunk:
-                                part_file.write(chunk)
+                    if response.ok:
+                        with open(filename, "wb") as part_file:
+                            for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                                if chunk:
+                                    part_file.write(chunk)
+                        print("Audio stream saved successfully.")
+                    else:
+                        # Print the error message if the request was not successful
+                        print(response.text)
                 except Exception as e:
                     print(f"Error: {e}")
 
