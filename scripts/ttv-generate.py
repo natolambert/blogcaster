@@ -16,10 +16,10 @@ SYSTEM_PROMPT = (
 )
 
 SYSTEM_PROMPT_STLYE = (
-    "Please draw art, or an artistic diagram, to accompany this summary or short snippet from a blog post."
-    "It needs a white background with sky blue coloring (some light grey) "
-    "and be in the style of 3blue1brown videos and and famous drawings. A little flashy. "
-    "It's about AI, visualize intelligence, feedback, and something people will like. \n\n"
+    "Please draw art, or an artistic diagram, to accompany this summary or short snippet."
+    "Filled from edge to edge with vibrant art, white base, with sky blue coloring (some light grey) "
+    "and be in the style of 3blue1brown videos or educational animations. A little flashy. "
+    "It's about AI, so visualize intelligence, feedback, and the future. \n\n"
 )
 
 # from OpenAI docs
@@ -36,11 +36,11 @@ def summarize_text(text):
     Tool to mitigate randomness of generations. Used when text length > 250 characters.
     """
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-2024-05-13",
         messages=[
             {
                 "role": "system",
-                "content": "Summarize content you are provided in two or three descriptive sentences that will be used to prompt DALLE 3.",  # noqa
+                "content": "Summarize content you are provided in two descriptive sentences that will be used to effectively prompt DALLE 3 for text-to-image generation.",  # noqa
             },
             {"role": "user", "content": text},
         ],
@@ -107,7 +107,7 @@ def get_image(idx, inputs, vivid=True, hd=True, rewrite=True, no_sleep=False):
         print(f"Idx: {idx}, Error: {e}")
 
     if not no_sleep:
-        time.sleep(25)  # 20/23 sec was rate limit erroring
+        time.sleep(20)  # 20/23 sec was rate limit erroring
 
 
 if __name__ == "__main__":
