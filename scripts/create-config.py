@@ -80,7 +80,7 @@ def prep_for_tts(text):
     Note: generate with 0 temperature for these :)
     """
     response = client.chat.completions.create(
-        model="gpt-4-turbo-2024-04-09",
+        model="gpt-4o-2024-05-13",
         messages=[
             {
                 "role": "system",
