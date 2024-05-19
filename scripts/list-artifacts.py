@@ -12,7 +12,10 @@ def process_collection(collection_name, index, print_idx=False):
 
     for idx, item in enumerate(collection.items[index:]):
         author, model_name = item.item_id.split('/')
-        model_link = f"https://huggingface.co/{item.item_id}"
+        if item.item_type == 'model':
+            model_link = f"https://huggingface.co/{item.item_id}"
+        else:
+            model_link = f"https://huggingface.co/{item.item_type}s/{item.item_id}"
         entry = f"- **[{model_name}]({model_link})** by [{author}](https://huggingface.co/{author}): TODO\n"
         
         if print_idx:
