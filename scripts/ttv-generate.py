@@ -169,7 +169,9 @@ if __name__ == "__main__":
     if not args.do_not_gen:
         with Pool(processes=3) as pool:
             # enumerate based on start index
-            pool.starmap(get_image, enumerate(zip(prompts, title), start=args.start_idx))
+            pool.starmap(
+                get_image, enumerate(zip(prompts[args.start_idx :], title[args.start_idx :]), start=args.start_idx)
+            )
 
         # move all images from temp-images to args.input/images
         os.system(f"mv temp-images/* {args.input}images")

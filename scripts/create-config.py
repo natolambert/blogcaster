@@ -23,7 +23,7 @@ AUDIO_FIXES = {
     ">": "",
     "**": "",
     "*": "",
-    "~": "approximately ", # for numbers
+    "~": "approximately ",  # for numbers
     " | ": " ",
     "\\ ": " ",
     "e.g.": "e g",
@@ -259,7 +259,7 @@ def parse_markdown_to_dict(md_content, filename):
 
                 # remove :, -, and leading space from text
                 text = text.replace(":", ",")
-                text = text.replace("--", ",") # simpler pause
+                text = text.replace("--", ",")  # simpler pause
                 if text.startswith(" "):
                     text = text[1:]
 
