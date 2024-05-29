@@ -115,6 +115,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, required=True, help="input text file dir")
     parser.add_argument("--do_not_gen", action="store_true", default=False, help="only download images")
+    parser.add_argument("--start_idx", type=int, default=0, help="start index for generation")
     args = parser.parse_args()
 
     # load yml file at args.input + config.yml
@@ -167,7 +168,8 @@ if __name__ == "__main__":
     # if --do_not_gen, do not do this
     if not args.do_not_gen:
         with Pool(processes=3) as pool:
-            pool.starmap(get_image, enumerate(zip(prompts, title)))
+            # enumerate based on start index
+            pool.starmap(get_image, enumerate(zip(prompts, title), start=args.start_idx))
 
         # move all images from temp-images to args.input/images
         os.system(f"mv temp-images/* {args.input}images")
