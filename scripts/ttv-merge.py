@@ -29,7 +29,7 @@ def get_cumulative_length(file_list, offset: float = 0.0):
 def adjust_audio_durations(audio_durations, is_image):
     # Ensure the lists are of the same length
     if len(audio_durations) != len(is_image):
-        raise ValueError("Lists audio_durations and is_image must be of the same length")
+        raise ValueError(f"Lists audio_durations {len(audio_durations)} and is_image {len(is_image)} must be of the same length")
 
     # Create a copy of the audio_durations list to modify
     adjusted_durations = audio_durations.copy()
