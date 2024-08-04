@@ -19,7 +19,7 @@ SYSTEM_PROMPT_STLYE = (
     "Please draw art, or an artistic diagram, to accompany this summary or short snippet."
     "Filled from edge to edge with vibrant art, white base, with sky blue coloring (some light grey) "
     "and be in the style of 3blue1brown videos or educational animations. A little flashy. "
-    "It's about AI, so visualize intelligence, feedback, and the future. \n\n"
+    # "It's about AI, so visualize intelligence, feedback, and the future. \n\n"
 )
 
 # from OpenAI docs
@@ -115,6 +115,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, required=True, help="input text file dir")
     parser.add_argument("--do_not_gen", action="store_true", default=False, help="only download images")
+    parser.add_argument("--start_idx", type=int, default=0, help="start index for generation")
     args = parser.parse_args()
 
     # load yml file at args.input + config.yml
@@ -167,7 +168,10 @@ if __name__ == "__main__":
     # if --do_not_gen, do not do this
     if not args.do_not_gen:
         with Pool(processes=3) as pool:
-            pool.starmap(get_image, enumerate(zip(prompts, title)))
+            # enumerate based on start index
+            pool.starmap(
+                get_image, enumerate(zip(prompts[args.start_idx :], title[args.start_idx :]), start=args.start_idx)
+            )
 
         # move all images from temp-images to args.input/images
         os.system(f"mv temp-images/* {args.input}images")
