@@ -43,12 +43,12 @@ def is_ffmpeg_normalize_runnable():
 def strip_title(string):
     """
     Config entry, as dicts, keep track of titles as N_title goes here.
-    Return the text after the _
+    Return the text after the _ and remove any *'s in the title
     """
     if "_" in string:
-        return string.split("_")[1]
+        return string.split("_")[1].replace("*", "")
     else:
-        return string
+        return string.replace("*", "")
 
 
 def get_cumulative_length(file_list, offset: float = 0.0):
