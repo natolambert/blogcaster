@@ -36,6 +36,8 @@ AUDIO_FIXES = {
     "8x7B": "8 by 7 B",
     "MoE": "M O E",
     "LLaVA": "llava",
+    "Nous": "noose",
+    "nous": "noose",
     "do-or-die": "do or die",
     "LLM-as-a-judge": "LLM as a judge",
     "LMSYS": "L M sys",
