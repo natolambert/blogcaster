@@ -278,8 +278,11 @@ def parse_markdown_to_dict(md_content, filename):
                 if text.endswith(" "):
                     text = text[:-1]
 
-                # Remove any () and everything inside them
-                text = re.sub(r"\([^)]*\)", "", text)
+                # Remove any () and everything inside them and extra space
+                text = re.sub(r"\s*\([^)]*\)\s*", " ", text)
+
+                # Clean extra spaces or new lines before . or ,
+                text = re.sub(r"\s+([.,])", r"\1", text)
 
                 # decode
                 text = unidecode.unidecode(text)
