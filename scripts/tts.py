@@ -448,6 +448,7 @@ if __name__ == "__main__":
             ["ffmpeg", "-i", "concat:" + "|".join(audio_files), "-c", "copy", audio_dir + "/" + args.output + ".mp3"]
         )
 
+
     # TODO remove all acronyms and other filtering, some that are bad are SOTA and MoE
     # TODO add seperate voice for quotes / quote detection
     # normalize audio file
@@ -472,6 +473,10 @@ if __name__ == "__main__":
                 "-22",  # in DB, normally before was about -24
             ]
         )
+
+    # Also copy audio file to python path (not subpath)
+    os.system(f"cp {audio_dir}/{args.output}.mp3 {args.output}.mp3")
+
 
     # if _sec_ in file in audio_files_short, remove it
     audio_files_short = [f for f in audio_files_short if "_sec_" not in f]

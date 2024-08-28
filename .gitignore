@@ -1,6 +1,7 @@
 .DS_Store
 *.m4a
 *.mp4
+generated_audio.mp3
 images/
 audio/
 source/
