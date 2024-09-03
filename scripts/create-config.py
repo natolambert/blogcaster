@@ -35,6 +35,7 @@ AUDIO_FIXES = {
     "8x22B": "8 by 22 B",
     "8x7B": "8 by 7 B",
     "MoE": "M O E",
+    "Ai2": "A I 2",
     "LLaVA": "llava",
     "Nous": "noose",
     "nous": "noose",
