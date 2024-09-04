@@ -187,7 +187,7 @@ def parse_markdown_to_dict(md_content, filename):
     for line in md_content.split("\n\n"):
         if line.startswith("---"):
             continue
-        elif line.strip() == ">":
+        elif line.strip() == ">" or line.strip() == "> ":
             continue
         elif line.startswith("#"):
             # New section
